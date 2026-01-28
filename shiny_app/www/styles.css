@@ -1,0 +1,158 @@
+/* GmJAG1 Dashboard Custom Styles */
+
+/* General */
+body {
+  font-family: 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+}
+
+/* Cards */
+.card {
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  margin-bottom: 20px;
+}
+
+.card-header {
+  background-color: #f8f9fa;
+  font-weight: 600;
+}
+
+/* Value boxes */
+.value-box {
+  border-radius: 8px;
+  transition: transform 0.2s;
+}
+
+.value-box:hover {
+  transform: translateY(-2px);
+}
+
+/* Tables */
+.dataTables_wrapper {
+  font-size: 0.9em;
+}
+
+.dataTables_filter input {
+  border-radius: 4px;
+  border: 1px solid #ddd;
+  padding: 5px 10px;
+}
+
+/* Tier badges */
+.badge.bg-gold {
+  background-color: #FFD700 !important;
+  color: #333;
+}
+
+.badge.bg-silver {
+  background-color: #C0C0C0 !important;
+  color: #333;
+}
+
+.badge.bg-bronze {
+  background-color: #CD7F32 !important;
+  color: #fff;
+}
+
+/* Navigation */
+.navbar-brand {
+  font-weight: 700;
+}
+
+.nav-link {
+  font-weight: 500;
+  transition: color 0.2s;
+}
+
+.nav-link:hover {
+  color: #27AE60 !important;
+}
+
+/* Hero section */
+.bg-primary.text-white {
+  background: linear-gradient(135deg, #2C3E50 0%, #3498DB 100%) !important;
+}
+
+/* Plots */
+.plotly {
+  border-radius: 4px;
+}
+
+/* Buttons */
+.btn-primary {
+  background-color: #2C3E50;
+  border-color: #2C3E50;
+}
+
+.btn-primary:hover {
+  background-color: #1a252f;
+  border-color: #1a252f;
+}
+
+.btn-success {
+  background-color: #27AE60;
+  border-color: #27AE60;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: #f1f1f1;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 4px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #555;
+}
+
+/* Loading animation */
+.loading-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(255,255,255,0.9);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+}
+
+/* Responsive adjustments */
+@media (max-width: 768px) {
+  .card {
+    margin-bottom: 15px;
+  }
+
+  .value-box h2 {
+    font-size: 1.5rem;
+  }
+}
+
+/* Tab content spacing */
+.tab-content {
+  padding-top: 15px;
+}
+
+/* Well panel styling */
+.well {
+  background-color: #f8f9fa;
+  border: 1px solid #e9ecef;
+  border-radius: 4px;
+  padding: 15px;
+}
+
+/* Sidebar panels */
+.sidebar-panel {
+  background-color: #f8f9fa;
+  padding: 15px;
+  border-radius: 4px;
+}

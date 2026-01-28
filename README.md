@@ -98,6 +98,7 @@ Scripts are organized in execution order:
                            cross-validation
 11_72gene_analysis/        Functional categorization and visualization of 72
                            high-confidence targets
+shiny_app/                 Interactive Shiny dashboard for exploring results
 ```
 
 ## Execution Order
@@ -115,6 +116,14 @@ Folders are numbered in the order they should be run. Within each folder, script
 ## Experimental Design
 
 Four soybean genotypes (2 narrow-leaf with D9H mutation in GmJAG1, 2 broad-leaf with functional GmJAG1) sampled at 5 developmental timepoints (TP1-TP5, meristem to expanding leaf), 3 biological replicates each, 60 samples total.
+
+## Interactive Dashboard
+
+The `shiny_app/` folder contains an interactive Shiny application for exploring the RNA-seq results, including gene expression profiles, differential expression, GO enrichment, WGCNA modules, and phenotype correlations. To run locally:
+
+```r
+shiny::runApp("shiny_app")
+```
 
 ## License
 
