@@ -210,22 +210,38 @@ cat("  Found by Ortholog only:", sum(!all_cdks$found_by_keyword & all_cdks$found
 cat("  Found by both:", sum(all_cdks$found_by_keyword & all_cdks$found_by_ortholog), "\n\n")
 
 # 4a. Classify CDK types
-
+# -----------------------------------------------------------------------------
+# CLASSIFICATION BY ARABIDOPSIS GENE ID (most accurate method)
+# Core cell cycle CDKs identified by their Arabidopsis ortholog gene IDs:
+#   - AT3G48750 = CDKA;1 (the canonical cell division CDK, also called CDC2)
+#   - AT3G54180 = CDKB1;1 (plant-specific, G2/M)
+#   - AT2G38620 = CDKB1;2 (plant-specific, G2/M)
+#   - AT1G76540 = CDKB2;1 (plant-specific, G2/M)
+#   - AT1G20930 = CDKB2;2 (plant-specific, G2/M)
+#
+# NOT core cell cycle (exclude from CDKA classification):
+#   - AT5G39420 = CDK8/CDKE1/HEN3 (Mediator complex, transcription regulation)
+# -----------------------------------------------------------------------------
 
 all_cdks <- all_cdks %>%
   mutate(
     cdk_type = case_when(
-      grepl("CDKA|CDK.A", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKA",
-      grepl("CDKB1", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKB1",
-      grepl("CDKB2", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKB2",
-      grepl("CDKB", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKB",
+      # FIRST: Use Arabidopsis gene IDs for accurate core cell cycle CDK classification
+      `Best-hit-arabi-name` == "AT3G48750" ~ "CDKA",    # CDKA;1 (true core cell cycle CDK)
+      `Best-hit-arabi-name` == "AT3G54180" ~ "CDKB1",   # CDKB1;1
+      `Best-hit-arabi-name` == "AT2G38620" ~ "CDKB1",   # CDKB1;2
+      `Best-hit-arabi-name` == "AT1G76540" ~ "CDKB2",   # CDKB2;1
+      `Best-hit-arabi-name` == "AT1G20930" ~ "CDKB2",   # CDKB2;2
+      # AT5G39420 is CDK8/CDKE1/HEN3 (Mediator complex) - NOT core cell cycle
+      `Best-hit-arabi-name` == "AT5G39420" ~ "CDK8",    # Mediator kinase
+      `Best-hit-arabi-name` == "AT5G63610" ~ "CDK8",    # Also CDK8
+      # THEN: Check name/defline patterns for other CDK types
       grepl("CDKC", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKC",
       grepl("CDKD", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKD",
       grepl("CDKE", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKE",
       grepl("CDKF", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKF",
       grepl("CDKG", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKG",
-      # Also check defline
-      grepl("CDKA|CDK.A", `Best-hit-arabi-defline`, ignore.case = TRUE) ~ "CDKA",
+      # Check defline for remaining
       grepl("CDKB1", `Best-hit-arabi-defline`, ignore.case = TRUE) ~ "CDKB1",
       grepl("CDKB2", `Best-hit-arabi-defline`, ignore.case = TRUE) ~ "CDKB2",
       grepl("CDKB", `Best-hit-arabi-defline`, ignore.case = TRUE) ~ "CDKB",
@@ -238,7 +254,8 @@ all_cdks <- all_cdks %>%
     ),
     cdk_function = case_when(
       cdk_type == "CDKA" ~ "Core cell cycle (G1/S and G2/M)",
-      cdk_type %in% c("CDKB", "CDKB1", "CDKB2") ~ "Plant-specific (G2/M phase)",
+      cdk_type %in% c("CDKB", "CDKB1", "CDKB2") ~ "Core cell cycle (G2/M phase)",
+      cdk_type == "CDK8" ~ "Mediator complex (transcription)",
       cdk_type == "CDKC" ~ "Transcription regulation",
       cdk_type == "CDKD" ~ "CDK-activating kinase (CAK)",
       cdk_type == "CDKE" ~ "Mediator complex",
