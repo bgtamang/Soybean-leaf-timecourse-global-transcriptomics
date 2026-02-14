@@ -22,7 +22,7 @@ jag1_ui <- function(id) {
             ),
             hr(),
             selectInput(ns("pattern"), "Expression Pattern:",
-              choices = c("All", "Persistent", "TP0-specific"),
+              choices = c("All", "Persistent", "TP0_Specific", "Late_Onset", "Variable"),
               selected = "All"
             ),
             hr(),

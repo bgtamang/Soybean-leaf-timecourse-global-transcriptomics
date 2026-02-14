@@ -1,17 +1,30 @@
+# Script 12: Differential Expression Results
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 12: DE RESULTS EXTRACTION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/DE", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "dplyr",
   "tidyr"
@@ -19,9 +32,23 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/11_DE_results.RData")
 cat("Loaded checkpoint from script 11\n")
 cat("  DE results for", length(de_results), "contrasts\n\n")
+
+# ===== SECTION 2: EXPORT INDIVIDUAL CONTRAST RESULTS =====
+
+cat("========================================\n")
+cat("SECTION 2: EXPORT INDIVIDUAL RESULTS\n")
+cat("========================================\n\n")
+
 cat("Saving results for each contrast...\n")
 
 # Significance thresholds
@@ -52,6 +79,13 @@ for (contrast_name in names(de_results)) {
 }
 
 cat("  Saved", length(de_results), "individual result files\n\n")
+
+# ===== SECTION 2B: CREATE COMPREHENSIVE RESULTS MATRIX =====
+
+cat("========================================\n")
+cat("SECTION 2B: COMPREHENSIVE RESULTS MATRIX\n")
+cat("========================================\n\n")
+
 cat("Creating wide-format matrix with all contrasts...\n")
 
 # Get all genes and contrast names
@@ -115,8 +149,11 @@ comprehensive_de_results$AveExpr <- rowMeans(logCPM_matrix, na.rm = TRUE)
 
 cat("  Matrix created:", nrow(comprehensive_de_results), "genes x", length(contrast_names), "contrasts\n")
 
+# ===== SECTION 2C: ADD GENE ANNOTATION =====
 
 cat("\n========================================\n")
+cat("SECTION 2C: ADD GENE ANNOTATION\n")
+cat("========================================\n\n")
 
 cat("Loading gene annotation...\n")
 
@@ -217,6 +254,13 @@ write.csv(top_de_genes,
           "03_results/tables/DE/top100_DE_genes_annotated.csv",
           row.names = FALSE)
 cat("Saved: 03_results/tables/DE/top100_DE_genes_annotated.csv\n\n")
+
+# ===== SECTION 3: CREATE COMBINED RESULTS TABLE =====
+
+cat("========================================\n")
+cat("SECTION 3: COMBINED RESULTS\n")
+cat("========================================\n\n")
+
 cat("Creating combined DE results table...\n")
 
 # Combine all significant results
@@ -243,6 +287,13 @@ cat("  Unique genes:", length(unique(all_sig_results$Gene)), "\n\n")
 # Save combined results
 write.csv(all_sig_results, "03_results/tables/DE_all_significant.csv", row.names = FALSE)
 cat("Saved: 03_results/tables/DE_all_significant.csv\n\n")
+
+# ===== SECTION 4: MULTI-CONTRAST ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 4: MULTI-CONTRAST ANALYSIS\n")
+cat("========================================\n\n")
+
 # Count how many contrasts each gene is DE in
 gene_contrast_count <- all_sig_results %>%
   group_by(Gene) %>%
@@ -267,8 +318,11 @@ cat("\nSaved: 03_results/tables/DE_genes_multicontrast.csv\n")
 cat("\n\nTop 20 genes (DE in most contrasts):\n")
 print(head(gene_contrast_count[, c("Gene", "N_contrasts", "Mean_logFC", "Min_FDR")], 20))
 
+# ===== SECTION 5: KEY CONTRAST ANALYSIS (JAG1 TARGETS) =====
 
 cat("\n========================================\n")
+cat("SECTION 5: KEY CONTRAST ANALYSIS\n")
+cat("========================================\n\n")
 
 # Analyze Narrow vs Broad at TP0 (genes up in narrow are potential JAG1 targets)
 cat("Analyzing Narrow vs Broad comparisons at TP0...\n")
@@ -322,8 +376,11 @@ if (length(narrow_up_genes) > 0) {
   print(head(jag1_candidates, 20))
 }
 
+# ===== SECTION 6: TEMPORAL DE SUMMARY =====
 
 cat("\n========================================\n")
+cat("SECTION 6: TEMPORAL DE SUMMARY\n")
+cat("========================================\n\n")
 
 # Analyze temporal patterns
 temporal_contrasts <- de_summary[de_summary$Type == "Temporal_vsTP0", ]
@@ -348,8 +405,11 @@ if (nrow(temporal_contrasts) > 0) {
   cat("\nSaved: 03_results/tables/DE_temporal_summary.csv\n")
 }
 
+# ===== SECTION 7: SAVE OUTPUTS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SAVE OUTPUTS\n")
+cat("========================================\n\n")
 
 # Save organized checkpoint
 save(de_results, de_results_treat, de_summary, contrast_desc,
@@ -363,14 +423,20 @@ save(de_results, de_results_treat, de_summary, contrast_desc,
 cat("Saved: 03_results/checkpoints/12_DE_organized.RData\n")
 cat("  Includes: comprehensive_de_results, TestResults objects, matrices\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 12: DE RESULTS - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -389,3 +455,5 @@ cat("    - 03_results/tables/DE_genes_multicontrast.csv\n")
 cat("    - 03_results/tables/JAG1_candidates_preliminary.csv\n")
 cat("    - 03_results/tables/DE_temporal_summary.csv\n")
 cat("\n")
+cat("  Next: Run 13_DE_visualization.R\n")
+cat("================================================================\n")

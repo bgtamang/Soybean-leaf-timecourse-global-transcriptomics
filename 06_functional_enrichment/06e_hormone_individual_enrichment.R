@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+# ==============================================================================
+# Script 37e: Individual Hormone Pathway Enrichment Analysis
+# ==============================================================================
+# Purpose: Test enrichment for EACH hormone pathway separately
 #          (auxin, cytokinin, JA, SA, ABA, ethylene, brassinosteroid, gibberellin)
 #
 # Rationale: The combined pathway analysis (37a, 37b) may miss pathway-specific
@@ -15,16 +19,23 @@
 #   - Visualization
 #
 # Dependency: Run AFTER 37a and 37b
+# ==============================================================================
 
+cat("=======================================================================\n")
 cat("Script 37e: Individual Hormone Pathway Enrichment Analysis\n")
+cat("=======================================================================\n\n")
 
+# ------------------------------------------------------------------------------
 # 0. Set Working Directory to Project Root
-script_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+# ------------------------------------------------------------------------------
+script_dir <- tryCatch(dirname(rstudioapi::getSourceEditorContext()$path), error = function(e) file.path(getwd(), "02_scripts"))
 project_root <- dirname(script_dir)
 setwd(project_root)
 cat("Working directory:", getwd(), "\n\n")
 
+# ------------------------------------------------------------------------------
 # 1. Setup and Load Dependencies
+# ------------------------------------------------------------------------------
 cat("1. Loading packages and previous results...\n")
 
 suppressPackageStartupMessages({
@@ -63,7 +74,9 @@ cat("   Background genes:", length(background_genes), "\n")
 cat("   DE genes:", length(de_genes), "\n")
 cat("   JAG1 targets:", length(target_genes), "\n")
 
+# ------------------------------------------------------------------------------
 # 2. Define Individual Hormone Pathways Based on KEGG KO IDs
+# ------------------------------------------------------------------------------
 cat("\n2. Defining individual hormone pathways...\n")
 
 # KEGG KO IDs for each hormone pathway (from gmx04075)
@@ -122,7 +135,7 @@ hormone_ko_mapping <- list(
   ),
   Salicylic_acid = c(
     "K14431",  # TGA - transcription factor TGA
-    "K14508",  # NPR1 - regulatory protein NPR1
+    "K14432",  # NPR1 - regulatory protein NPR1 (corrected: K14508 is ORCA3/JA, not NPR1)
     "K13449"   # PR1 - pathogenesis-related protein 1
   )
 )
@@ -132,7 +145,9 @@ for (h in names(hormone_ko_mapping)) {
   cat("     ", h, ":", length(hormone_ko_mapping[[h]]), "KO IDs\n")
 }
 
+# ------------------------------------------------------------------------------
 # 3. Load Annotation and Map Genes to Individual Pathways
+# ------------------------------------------------------------------------------
 cat("\n3. Mapping genes to individual hormone pathways...\n")
 
 # Load annotation file
@@ -176,7 +191,9 @@ for (hormone in names(hormone_ko_mapping)) {
   cat("   ", hormone, ":", length(hormone_genes[[hormone]]), "genes\n")
 }
 
+# ------------------------------------------------------------------------------
 # 4. Enrichment Analysis Function
+# ------------------------------------------------------------------------------
 cat("\n4. Performing enrichment analysis for each hormone pathway...\n")
 
 perform_enrichment <- function(test_genes, pathway_genes, background_genes, pathway_name) {
@@ -226,7 +243,9 @@ perform_enrichment <- function(test_genes, pathway_genes, background_genes, path
   )
 }
 
+# ------------------------------------------------------------------------------
 # 5. Test Enrichment in DE Genes
+# ------------------------------------------------------------------------------
 cat("\n5. Testing enrichment in DE genes (Narrow vs Broad)...\n")
 
 de_enrichment <- bind_rows(lapply(names(hormone_genes), function(h) {
@@ -247,7 +266,9 @@ print(as.data.frame(de_enrichment[, c("Hormone", "Genes_in_test_set", "Expected"
 write_csv(de_enrichment,
           "03_results/tables/hormone_analysis/37e_DE_individual_hormone_enrichment.csv")
 
+# ------------------------------------------------------------------------------
 # 6. Test Enrichment in JAG1 Targets
+# ------------------------------------------------------------------------------
 cat("\n6. Testing enrichment in JAG1 targets...\n")
 
 jag1_enrichment <- bind_rows(lapply(names(hormone_genes), function(h) {
@@ -268,7 +289,9 @@ print(as.data.frame(jag1_enrichment[, c("Hormone", "Genes_in_test_set", "Expecte
 write_csv(jag1_enrichment,
           "03_results/tables/hormone_analysis/37e_JAG1_individual_hormone_enrichment.csv")
 
+# ------------------------------------------------------------------------------
 # 7. Test Enrichment in Upregulated vs Downregulated DE Genes
+# ------------------------------------------------------------------------------
 cat("\n7. Testing enrichment in up/down-regulated genes separately...\n")
 
 de_up_enrichment <- bind_rows(lapply(names(hormone_genes), function(h) {
@@ -307,7 +330,9 @@ for (i in 1:nrow(down_summary)) {
               down_summary$Fold_enrichment[i], down_summary$P_value[i]))
 }
 
+# ------------------------------------------------------------------------------
 # 8. Create Combined Summary Table
+# ------------------------------------------------------------------------------
 cat("\n8. Creating combined summary table...\n")
 
 combined_summary <- de_enrichment %>%
@@ -333,7 +358,9 @@ print(as.data.frame(combined_summary))
 write_csv(combined_summary,
           "03_results/tables/hormone_analysis/37e_combined_hormone_summary.csv")
 
+# ------------------------------------------------------------------------------
 # 9. Visualization
+# ------------------------------------------------------------------------------
 cat("\n9. Creating visualizations...\n")
 
 # Plot 1: Fold enrichment comparison (DE vs JAG1)
@@ -437,7 +464,9 @@ ggsave("03_results/figures/37e_individual_hormones/hormone_gene_counts.pdf",
        p3, width = 10, height = 6)
 cat("   Saved: hormone_gene_counts.png/pdf\n")
 
+# ------------------------------------------------------------------------------
 # 10. List Genes by Hormone Pathway
+# ------------------------------------------------------------------------------
 cat("\n10. Creating gene lists by hormone pathway...\n")
 
 # Get the hormone genes that are DE or JAG1 targets
@@ -476,7 +505,9 @@ if (nrow(hormone_gene_lists) > 0) {
   cat("   Saved gene lists with", nrow(hormone_gene_lists), "entries\n")
 }
 
+# ------------------------------------------------------------------------------
 # 11. Save Checkpoint
+# ------------------------------------------------------------------------------
 cat("\n11. Saving checkpoint...\n")
 
 individual_hormone_analysis <- list(
@@ -493,9 +524,13 @@ save(individual_hormone_analysis,
      file = "03_results/checkpoints/37e_individual_hormones.RData")
 cat("   Saved: 37e_individual_hormones.RData\n")
 
+# ------------------------------------------------------------------------------
 # 12. Print Summary Report
+# ------------------------------------------------------------------------------
 cat("\n")
+cat("=======================================================================\n")
 cat("      SCRIPT 37e SUMMARY: INDIVIDUAL HORMONE ENRICHMENT\n")
+cat("=======================================================================\n\n")
 
 cat("QUESTION: Are any INDIVIDUAL hormone pathways enriched?\n")
 cat("          (The combined analysis may miss pathway-specific signals)\n\n")
@@ -507,6 +542,7 @@ for (h in names(hormone_genes)) {
 
 cat("\n")
 cat("ENRICHMENT IN DE GENES (Narrow vs Broad):\n")
+cat("=========================================\n")
 for (i in 1:nrow(de_enrichment)) {
   sig <- ifelse(de_enrichment$P_value[i] < 0.05, " ***", "")
   cat(sprintf("  %-15s: %2d genes (exp: %5.1f), fold=%5.2f, P=%.4f%s\n",
@@ -520,6 +556,7 @@ for (i in 1:nrow(de_enrichment)) {
 
 cat("\n")
 cat("ENRICHMENT IN JAG1 TARGETS:\n")
+cat("===========================\n")
 for (i in 1:nrow(jag1_enrichment)) {
   sig <- ifelse(jag1_enrichment$P_value[i] < 0.05, " ***", "")
   cat(sprintf("  %-15s: %2d genes (exp: %5.1f), fold=%5.2f, P=%.4f%s\n",
@@ -533,6 +570,7 @@ for (i in 1:nrow(jag1_enrichment)) {
 
 cat("\n")
 cat("KEY FINDINGS:\n")
+cat("=============\n")
 
 # Check for significant enrichments
 sig_de <- de_enrichment %>% filter(P_value < 0.05)
@@ -592,3 +630,4 @@ cat("    - hormone_gene_counts.png/pdf\n")
 
 cat("\n=======================================================================\n")
 cat("Script 37e complete.\n")
+cat("=======================================================================\n")

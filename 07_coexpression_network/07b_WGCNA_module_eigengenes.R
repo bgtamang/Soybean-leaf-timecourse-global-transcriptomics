@@ -1,17 +1,30 @@
+# Script 19: Module Eigengene Analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 19: MODULE EIGENGENE ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/19_WGCNA_eigengenes", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "WGCNA",
   "ggplot2",
@@ -25,11 +38,25 @@ required_packages <- c(
 invisible(lapply(required_packages, library, character.only = TRUE))
 enableWGCNAThreads()
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINTS =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/18_WGCNA_prep.RData")
 cat("Loaded WGCNA preparation data\n")
 cat("  Genes:", ncol(datExpr), "\n")
 cat("  Samples:", nrow(datExpr), "\n")
 cat("  Modules:", max(net$colors), "\n\n")
+
+# ===== MODULE EIGENGENES =====
+
+cat("========================================\n")
+cat("SECTION 2: MODULE EIGENGENES\n")
+cat("========================================\n\n")
+
 # Get module eigengenes from network
 MEs <- net$MEs
 
@@ -54,6 +81,13 @@ ME_data$Timepoint <- targets$Timepoint
 ME_data$Group <- paste(targets$Leaf_type, targets$Timepoint, sep = "_")
 
 cat("Sample metadata added to ME data\n\n")
+
+# ===== MODULE SIZE ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 3: MODULE SIZE ANALYSIS\n")
+cat("========================================\n\n")
+
 # Calculate module sizes
 module_sizes <- table(net$colors)
 module_info <- data.frame(
@@ -92,8 +126,11 @@ barplot(
 dev.off()
 cat("Saved: module_sizes.png\n")
 
+# ===== MODULE EIGENGENE CLUSTERING =====
 
 cat("\n========================================\n")
+cat("SECTION 4: MODULE EIGENGENE RELATIONSHIPS\n")
+cat("========================================\n\n")
 
 # Calculate ME correlations (excluding grey module ME0)
 MEs_no_grey <- MEs[, !grepl("ME0", colnames(MEs))]
@@ -115,8 +152,11 @@ legend("topright", legend = c("h = 0.25", "h = 0.20"),
 dev.off()
 cat("Saved: ME_clustering.png\n")
 
+# ===== ME HEATMAP ACROSS SAMPLES =====
 
 cat("\n========================================\n")
+cat("SECTION 5: ME EXPRESSION PATTERNS\n")
+cat("========================================\n\n")
 
 # Create sample annotation
 sample_anno <- data.frame(
@@ -156,8 +196,11 @@ pheatmap(
 dev.off()
 cat("Saved: ME_heatmap_all_samples.png\n")
 
+# ===== ME PATTERNS BY CONDITION =====
 
 cat("\n========================================\n")
+cat("SECTION 6: ME PATTERNS BY CONDITION\n")
+cat("========================================\n\n")
 
 # Calculate mean ME for each condition
 ME_means <- aggregate(MEs_no_grey,
@@ -201,8 +244,11 @@ pheatmap(
 dev.off()
 cat("Saved: ME_heatmap_conditions.png\n")
 
+# ===== TEMPORAL PATTERNS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: TEMPORAL PATTERNS\n")
+cat("========================================\n\n")
 
 # Identify top modules by variance across conditions
 ME_var <- apply(ME_means_matrix, 2, var)
@@ -265,8 +311,11 @@ for (me_name in top_variable_modules) {
 dev.off()
 cat("\nSaved: ME_temporal_patterns.png\n")
 
+# ===== ME NETWORK VISUALIZATION =====
 
 cat("\n========================================\n")
+cat("SECTION 8: ME NETWORK\n")
+cat("========================================\n\n")
 
 # Plot eigengene network
 png("03_results/figures/19_WGCNA_eigengenes/ME_network.png",
@@ -286,8 +335,11 @@ plotEigengeneNetworks(
 dev.off()
 cat("Saved: ME_network.png\n")
 
+# ===== IDENTIFY MODULES OF INTEREST =====
 
 cat("\n========================================\n")
+cat("SECTION 9: MODULES OF INTEREST\n")
+cat("========================================\n\n")
 
 # Identify modules with strong leaf type effects
 # Compare Broad vs Narrow at each timepoint
@@ -323,8 +375,11 @@ print(head(leaf_effect[, c("Module", "TP0_Diff", "Mean_Abs_Diff")], 10))
 write.csv(leaf_effect, "03_results/tables/WGCNA/module_leaf_effects.csv", row.names = FALSE)
 cat("\nSaved: module_leaf_effects.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 10: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 save(
   MEs,
@@ -346,9 +401,13 @@ save(
 
 cat("Checkpoint saved: 19_WGCNA_eigengenes.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 19 COMPLETE: MODULE EIGENGENE ANALYSIS\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Module eigengenes calculated for", ncol(MEs), "modules\n")
@@ -370,3 +429,4 @@ cat("    - ME_heatmap_conditions.png\n")
 cat("    - ME_temporal_patterns.png\n")
 cat("    - ME_network.png\n\n")
 
+cat("NEXT STEP: Run Script 20 for module-trait correlation analysis\n\n")

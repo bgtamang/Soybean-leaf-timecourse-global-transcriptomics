@@ -10,12 +10,12 @@ samples_ui <- function(id) {
           card_header("Controls"),
           card_body(
             selectInput(ns("color_by"), "Color by:",
-              choices = c("Leaf_type", "Timepoint", "Line", "Batch"),
-              selected = "Leaf_type"
+              choices = c("Timepoint", "Leaf_type", "Line", "Batch"),
+              selected = "Timepoint"
             ),
             selectInput(ns("shape_by"), "Shape by:",
-              choices = c("None", "Timepoint", "Line", "Batch"),
-              selected = "Timepoint"
+              choices = c("None", "Leaf_type", "Timepoint", "Line", "Batch"),
+              selected = "Leaf_type"
             ),
             hr(),
             checkboxGroupInput(ns("timepoints"), "Timepoints:",
@@ -96,39 +96,57 @@ samples_server <- function(id) {
         return(plotly_empty() %>% layout(title = "No samples match filters"))
       }
 
-      # Build publication-quality PCA plot
+      # Leaf type shapes matching publication (circle=Broad, triangle=Narrow)
+      leaf_shapes <- c("Broad" = 21, "Narrow" = 24)
+
+      # Build publication-quality PCA plot (matches Fig 2A)
       p <- ggplot(plot_data, aes(x = PC1, y = PC2,
-                                  color = .data[[input$color_by]],
                                   text = paste("Sample:", Sample,
                                              "<br>Line:", Line,
                                              "<br>Timepoint:", Timepoint)))
 
       if (input$shape_by != "None") {
-        p <- p + geom_point(aes(shape = .data[[input$shape_by]]), size = 4, alpha = 0.85,
-                            stroke = 0.8)
+        p <- p + geom_point(aes(fill = .data[[input$color_by]],
+                                shape = .data[[input$shape_by]]),
+                            size = 3.5, stroke = 0.3, color = "black", alpha = 0.9)
       } else {
-        p <- p + geom_point(size = 4, alpha = 0.85, stroke = 0.8)
+        p <- p + geom_point(aes(fill = .data[[input$color_by]]),
+                            shape = 21, size = 3.5, stroke = 0.3,
+                            color = "black", alpha = 0.9)
       }
 
       p <- p +
         theme_publication(base_size = 13) +
         labs(
-          title = "Principal Component Analysis",
-          x = paste0("PC1 (", round(pca_data$variance[1], 1), "% variance)"),
-          y = paste0("PC2 (", round(pca_data$variance[2], 1), "% variance)"),
-          color = gsub("_", " ", input$color_by),
+          x = paste0("PC1 (", round(pca_data$variance[1], 1), "%)"),
+          y = paste0("PC2 (", round(pca_data$variance[2], 1), "%)"),
+          fill = gsub("_", " ", input$color_by),
           shape = if (input$shape_by != "None") gsub("_", " ", input$shape_by) else NULL
         ) +
         theme(
+          aspect.ratio = 1,
           legend.position = "right",
-          plot.title = element_text(size = 14)
+          legend.box = "vertical"
         )
 
+      # Color scale
       if (input$color_by == "Leaf_type") {
-        p <- p + scale_color_manual(values = leaftype_colors, name = "Leaf Type")
+        p <- p + scale_fill_manual(values = leaftype_colors, name = "Leaf Type")
       } else if (input$color_by == "Timepoint") {
-        p <- p + scale_color_manual(values = timepoint_colors, name = "Timepoint")
+        p <- p + scale_fill_manual(values = timepoint_colors, name = "Timepoint")
       }
+
+      # Shape scale
+      if (input$shape_by == "Leaf_type") {
+        p <- p + scale_shape_manual(values = leaf_shapes, name = "Leaf Type",
+                                    labels = c("Broad (Ln)", "Narrow (ln)"))
+      }
+
+      # Legend overrides for filled shapes
+      p <- p + guides(
+        fill = guide_legend(order = 1, override.aes = list(shape = 21, size = 3)),
+        shape = guide_legend(order = 2, override.aes = list(size = 3, fill = "gray50"))
+      )
 
       ggplotly(p, tooltip = "text") %>%
         layout(legend = list(orientation = "v", x = 1.02, y = 0.5))
@@ -191,8 +209,8 @@ samples_server <- function(id) {
         return()
       }
 
-      # Count detected genes per sample (TPM > 1)
-      detected <- colSums(expr > 1, na.rm = TRUE)
+      # Count detected genes per sample (logCPM > 0, i.e., CPM > 1)
+      detected <- colSums(expr > 0, na.rm = TRUE)
 
       det_df <- data.frame(
         Sample = names(detected),
@@ -220,7 +238,7 @@ samples_server <- function(id) {
         scale_fill_manual(values = leaftype_colors) +
         coord_flip() +
         theme_minimal() +
-        labs(x = NULL, y = "Detected Genes (thousands, TPM > 1)", fill = "Leaf Type") +
+        labs(x = NULL, y = "Detected Genes (thousands, CPM > 1)", fill = "Leaf Type") +
         theme(axis.text.y = element_text(size = 7))
     })
   })

@@ -22,13 +22,7 @@ download_ui <- function(id) {
           card_header("JAG1 Target Data"),
           card_body(
             p("Download JAG1 target gene lists"),
-            selectInput(ns("target_tier"), "Select Tier:",
-              choices = c("All Targets (1,511)" = "all",
-                          "Gold Tier (74)" = "gold",
-                          "Silver Tier (65)" = "silver",
-                          "Bronze Tier (1,372)" = "bronze",
-                          "Top 50" = "top50")
-            ),
+            uiOutput(ns("tier_selector")),
             downloadButton(ns("download_targets"), "Download Targets", class = "btn-primary btn-block w-100")
           )
         )
@@ -40,7 +34,7 @@ download_ui <- function(id) {
             p("Download expression matrices"),
             selectInput(ns("expr_type"), "Select Data:",
               choices = c("Sample Metadata" = "metadata",
-                          "TPM Matrix (Top 20K genes)" = "tpm")
+                          "logCPM Matrix (Batch-corrected)" = "logcpm")
             ),
             downloadButton(ns("download_expression"), "Download Expression", class = "btn-info btn-block w-100")
           )
@@ -108,6 +102,26 @@ download_ui <- function(id) {
 download_server <- function(id) {
   moduleServer(id, function(input, output, session) {
 
+    # Dynamic tier selector with counts from data
+    output$tier_selector <- renderUI({
+      ns <- session$ns
+      n_all <- project_info$n_targets
+      n_gold <- project_info$n_gold
+      n_silver <- project_info$n_silver
+      n_bronze <- project_info$n_bronze
+      choice_vals <- c("all", "gold", "silver", "bronze", "top50")
+      choice_names <- c(
+        paste0("All Targets (", format(n_all, big.mark = ","), ")"),
+        paste0("Gold Tier (", n_gold, ")"),
+        paste0("Silver Tier (", n_silver, ")"),
+        paste0("Bronze Tier (", format(n_bronze, big.mark = ","), ")"),
+        "Top 50"
+      )
+      selectInput(ns("target_tier"), "Select Tier:",
+        choices = setNames(choice_vals, choice_names)
+      )
+    })
+
     # Download JAG1 targets
     output$download_targets <- downloadHandler(
       filename = function() {
@@ -133,7 +147,7 @@ download_server <- function(id) {
       content = function(file) {
         if (input$expr_type == "metadata") {
           write.csv(experimental_design, file, row.names = FALSE)
-        } else if (input$expr_type == "tpm") {
+        } else if (input$expr_type == "logcpm") {
           expr <- load_expression()
           expr_df <- as.data.frame(expr)
           expr_df$GeneID <- rownames(expr_df)
@@ -186,9 +200,10 @@ download_server <- function(id) {
         expr_sub$Sample <- rownames(expr_sub)
         expr_sub <- expr_sub[, c("Sample", valid_genes)]
 
-        # Add sample info
+        # Add sample info (try both possible column names)
+        join_col <- if ("Sample_name" %in% names(experimental_design)) "Sample_name" else "Sample"
         expr_out <- expr_sub %>%
-          left_join(experimental_design, by = c("Sample" = "Sample_name"))
+          left_join(experimental_design, by = c("Sample" = join_col))
 
         write.csv(expr_out, file, row.names = FALSE)
       }

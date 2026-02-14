@@ -1,20 +1,33 @@
+# Script 23: Functional Category Analysis (Keyword-Based)
 # Classifies JAG1 targets based on Arabidopsis ortholog annotation keywords
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 23: FUNCTIONAL CATEGORY ANALYSIS\n")
 cat("  Keyword-Based Classification\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/23_functional_categories", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/tables/functional", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "ggplot2",
   "dplyr",
@@ -25,6 +38,13 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== FUNCTIONAL CATEGORY DEFINITIONS =====
+
+cat("========================================\n")
+cat("SECTION 1: CATEGORY DEFINITIONS\n")
+cat("========================================\n\n")
+
 # Keywords to search in Arabidopsis ortholog deflines
 functional_categories <- list(
 
@@ -64,6 +84,13 @@ functional_categories <- list(
 
 cat("Defined", length(functional_categories), "functional categories\n")
 cat("Categories:", paste(names(functional_categories), collapse = ", "), "\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load JAG1 target checkpoint
 load("03_results/checkpoints/14_JAG1_targets.RData")
 cat("Loaded JAG1 target data\n")
@@ -89,6 +116,13 @@ if (file.exists(annotation_file)) {
 } else {
   stop("Annotation file not found!")
 }
+
+# ===== MERGE ANNOTATIONS =====
+
+cat("========================================\n")
+cat("SECTION 3: MERGE ANNOTATIONS\n")
+cat("========================================\n\n")
+
 # Get Arabidopsis deflines for JAG1 targets
 annot_genes <- annot %>%
   select(locusName, Best.hit.arabi.name, Best.hit.arabi.defline) %>%
@@ -108,6 +142,13 @@ n_with_annot <- sum(!is.na(jag1_with_annot$Best.hit.arabi.defline) &
                      jag1_with_annot$Best.hit.arabi.defline != "")
 cat("Targets with Arabidopsis annotation:", n_with_annot,
     "(", round(n_with_annot/nrow(jag1_with_annot)*100, 1), "%)\n\n")
+
+# ===== ASSIGN FUNCTIONAL CATEGORIES =====
+
+cat("========================================\n")
+cat("SECTION 4: ASSIGN FUNCTIONAL CATEGORIES\n")
+cat("========================================\n\n")
+
 # Function to assign category based on defline keywords
 assign_category <- function(defline) {
   if (is.na(defline) || defline == "") {
@@ -149,8 +190,11 @@ assign_category <- function(defline) {
 cat("Assigning functional categories...\n")
 jag1_with_annot$Functional_Category <- sapply(jag1_with_annot$Best.hit.arabi.defline, assign_category)
 
+# ===== SUMMARIZE CATEGORIES =====
 
 cat("\n========================================\n")
+cat("SECTION 5: CATEGORY SUMMARY\n")
+cat("========================================\n\n")
 
 # Overall summary
 category_summary <- jag1_with_annot %>%
@@ -173,8 +217,11 @@ category_by_tier <- jag1_with_annot %>%
     .groups = "drop"
   )
 
+# ===== DETAILED CATEGORY ANALYSIS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: DETAILED CATEGORY ANALYSIS\n")
+cat("========================================\n\n")
 
 # For each category, list example genes
 detailed_results <- list()
@@ -195,6 +242,13 @@ for (cat_name in unique(category_summary$Functional_Category)) {
     }
   }
 }
+
+# ===== LEAF DEVELOPMENT FOCUS =====
+
+cat("========================================\n")
+cat("SECTION 7: LEAF DEVELOPMENT GENES\n")
+cat("========================================\n\n")
+
 # Search for leaf development keywords in defline
 leaf_keywords <- c(
   "leaf", "blade", "lamina", "margin",
@@ -227,8 +281,11 @@ if (nrow(leaf_results) > 0) {
   print(leaf_results)
 }
 
+# ===== VISUALIZATION =====
 
 cat("\n========================================\n")
+cat("SECTION 8: VISUALIZATION\n")
+cat("========================================\n\n")
 
 # Publication theme
 theme_publication <- function(base_size = 12) {
@@ -330,8 +387,11 @@ ggsave("03_results/figures/23_functional_categories/category_by_tier.pdf",
        p_tier, width = 10, height = 7, dpi = 300)
 cat("  Saved tier comparison plot\n")
 
+# ===== SAVE TABLES =====
 
 cat("\n========================================\n")
+cat("SECTION 9: SAVE TABLES\n")
+cat("========================================\n\n")
 
 # Overall summary
 write.csv(category_summary, "03_results/tables/functional/functional_categories.csv",
@@ -357,8 +417,11 @@ if (nrow(leaf_results) > 0) {
   cat("Saved: leaf_development_genes.csv\n")
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 10: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 functional_analysis <- list(
   category_summary = category_summary,
@@ -377,9 +440,13 @@ save(
 
 cat("Checkpoint saved: 23_functional_categories.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 23 COMPLETE: FUNCTIONAL CATEGORY ANALYSIS\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  Total JAG1 targets:", nrow(jag1_with_annot), "\n")
@@ -407,3 +474,4 @@ cat("  - Figures: 03_results/figures/23_functional_categories/\n")
 cat("    - functional_categories_bar.png/pdf\n")
 cat("    - category_by_tier.png/pdf\n\n")
 
+cat("NEXT STEP: Run Script 24 for functional integration\n\n")

@@ -1,3 +1,6 @@
+# =============================================================================
+# Script 34d: Comprehensive Cyclin Gene Family Analysis
+# =============================================================================
 #
 # PURPOSE:
 # Identify and analyze all soybean cyclin genes to determine which are
@@ -22,14 +25,17 @@
 # - Binding evidence summary
 # - Comparison with KRP analysis
 #
+# =============================================================================
 
 # Set base directory
-base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 setwd(base_dir)
 
 library(tidyverse)
 
+# =============================================================================
 # 1. SETUP AND DATA LOADING
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMPREHENSIVE CYCLIN GENE FAMILY ANALYSIS\n")
@@ -38,8 +44,11 @@ cat("=" %>% rep(80) %>% paste(collapse = ""), "\n\n")
 cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("Purpose: Identify cyclin genes regulated by GmJAG1\n\n")
 
+# -----------------------------------------------------------------------------
 # 1a. Load Phytozome Annotation File
+# -----------------------------------------------------------------------------
 
+cat("--- STEP 1: Loading Reference Data ---\n\n")
 
 annotation_file <- file.path(base_dir, "01_data/Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
 
@@ -66,7 +75,9 @@ annotation_loci <- annotation %>%
 cat("Annotation file loaded successfully\n")
 cat("  Total unique loci:", nrow(annotation_loci), "\n\n")
 
+# =============================================================================
 # 2. IDENTIFY CYCLIN GENES - METHOD 1: PFAM DOMAINS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 1: PFAM DOMAIN SEARCH\n")
@@ -102,7 +113,9 @@ if (nrow(pfam_cyclins) > 0) {
 }
 cat("\n")
 
+# =============================================================================
 # 3. IDENTIFY CYCLIN GENES - METHOD 2: ANNOTATION KEYWORD SEARCH
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 2: ANNOTATION KEYWORD SEARCH\n")
@@ -116,14 +129,17 @@ cat("Searching for keywords:", paste(cyclin_keywords, collapse = ", "), "\n\n")
 keyword_cyclins <- annotation_loci %>%
   filter(grepl(paste(cyclin_keywords, collapse = "|"),
                `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
-  # Exclude CDK inhibitors (KRPs) which mention "cyclin-dependent"
-  filter(!grepl("INHIBITOR|KRP|ICK", `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
+  # Exclude CDK inhibitors (KRPs) and false positives from substring matches
+  # e.g. "recycling" contains "cyclin" as a substring
+  filter(!grepl("INHIBITOR|KRP|ICK|recycling", `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
   select(locusName, Pfam, `Best-hit-arabi-name`, `Best-hit-arabi-defline`)
 
 cat("RESULTS:\n")
 cat("  Genes with cyclin keywords:", nrow(keyword_cyclins), "\n\n")
 
+# =============================================================================
 # 4. COMBINE AND DEDUPLICATE
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMBINING RESULTS\n")
@@ -144,13 +160,47 @@ all_cyclins <- bind_rows(
     .groups = "drop"
   )
 
-cat("Combined unique cyclin genes:", nrow(all_cyclins), "\n")
+cat("Combined unique cyclin genes (before validation):", nrow(all_cyclins), "\n")
 cat("  Found by Pfam only:", sum(all_cyclins$found_by_pfam & !all_cyclins$found_by_keyword), "\n")
 cat("  Found by Keyword only:", sum(!all_cyclins$found_by_pfam & all_cyclins$found_by_keyword), "\n")
 cat("  Found by both:", sum(all_cyclins$found_by_pfam & all_cyclins$found_by_keyword), "\n\n")
 
-# 4a. Classify cyclin types
+# -----------------------------------------------------------------------------
+# 4b. Validate keyword-only hits
+# -----------------------------------------------------------------------------
+# Genes found only by keyword (not Pfam) are re-checked:
+# Their defline must contain a genuine cyclin keyword AND must not contain
+# false-positive substrings (e.g. "recycling" contains "cyclin").
+exclude_pattern <- "recycling|INHIBITOR|KRP|ICK"
 
+keyword_only <- all_cyclins %>%
+  filter(!found_by_pfam & found_by_keyword)
+
+if (nrow(keyword_only) > 0) {
+  keyword_pattern <- paste(cyclin_keywords, collapse = "|")
+  false_positives <- keyword_only %>%
+    filter(!grepl(keyword_pattern, `Best-hit-arabi-defline`, ignore.case = TRUE) |
+            grepl(exclude_pattern, `Best-hit-arabi-defline`, ignore.case = TRUE))
+
+  if (nrow(false_positives) > 0) {
+    cat("WARNING: Removing", nrow(false_positives), "false positive(s) from keyword search:\n")
+    for (i in 1:nrow(false_positives)) {
+      cat(sprintf("  - %s: %s\n", false_positives$locusName[i],
+                  false_positives$`Best-hit-arabi-defline`[i]))
+    }
+    cat("\n")
+    all_cyclins <- all_cyclins %>%
+      filter(!(locusName %in% false_positives$locusName))
+  }
+}
+
+cat("Validated cyclin genes:", nrow(all_cyclins), "\n\n")
+
+# -----------------------------------------------------------------------------
+# 4a. Classify cyclin types
+# -----------------------------------------------------------------------------
+
+cat("--- Classifying Cyclin Types ---\n\n")
 
 all_cyclins <- all_cyclins %>%
   mutate(
@@ -176,7 +226,9 @@ for (i in 1:nrow(cyclin_type_counts)) {
 }
 cat("\n")
 
+# =============================================================================
 # 5. CHECK EXPRESSION IN OUR DATA
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("EXPRESSION ANALYSIS\n")
@@ -249,7 +301,9 @@ if (file.exists(checkpoint_file)) {
   all_cyclins$mean_CPM <- NA
 }
 
+# =============================================================================
 # 6. CHECK JAG1 TARGET STATUS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("JAG1 TARGET STATUS\n")
@@ -305,7 +359,9 @@ if (file.exists(jag1_targets_file)) {
   all_cyclins$is_jag1_target <- NA
 }
 
+# =============================================================================
 # 7. CHECK BINDING EVIDENCE
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("BINDING EVIDENCE\n")
@@ -354,7 +410,9 @@ if (file.exists(binding_file)) {
   cat("WARNING: Binding integration file not found.\n")
 }
 
+# =============================================================================
 # 8. COMPARISON WITH KRPs
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMPARISON: CYCLINS vs KRPs\n")
@@ -392,7 +450,9 @@ if (file.exists(krp_file)) {
   cat("KRP comparison data not available. Run 34c_KRP_comprehensive_verification.R first.\n\n")
 }
 
+# =============================================================================
 # 9. SAVE RESULTS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("SAVING RESULTS\n")

@@ -1,21 +1,27 @@
+# Script 25a: Extract Published Binding Data with Peak Coordinates
 # Updated: 2026-01-25
 # Now extracts FULL peak coordinates, not just gene lists
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  EXTRACT PUBLISHED BINDING DATA - WITH PEAK COORDINATES\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("01_data/published", recursive = TRUE, showWarnings = FALSE)
 dir.create("01_data/published/peaks", recursive = TRUE, showWarnings = FALSE)
 
+# ===== CHECK FOR REQUIRED PACKAGE =====
 
 if (!requireNamespace("readxl", quietly = TRUE)) {
   cat("Installing readxl package...\n")
@@ -23,10 +29,14 @@ if (!requireNamespace("readxl", quietly = TRUE)) {
 }
 library(readxl)
 
+# ===== HUANG ET AL. 2021 CHIP-SEQ - FULL PEAK DATA =====
 
+cat("========================================\n")
+cat("SECTION 1: HUANG ET AL. 2021 CHIP-SEQ\n")
 cat("  Extracting FULL peak coordinates\n")
+cat("========================================\n\n")
 
-huang_file <- file.path(base_dir, "Phase2-Refined-Analysis/Manuscript/Literature",
+huang_file <- file.path(base_dir, "Phase3-Refined-Analysis/Manuscript/Literature",
                         "Huang et al 2021 Chip Seq/1-s2.0-S0888754320320723-mmc2.xlsx")
 
 # Alternative path if not found
@@ -51,6 +61,7 @@ if (file.exists(huang_file)) {
   cat("  Unique peaks (GmJBS IDs):", length(unique(huang_s3$GmJBS_ID)), "\n")
   cat("  Unique genes:", length(unique(huang_s3$GeneID)), "\n\n")
 
+  # ===== GENOMIC REGION DISTRIBUTION =====
   cat("Genomic Region Distribution:\n")
   region_table <- table(huang_s3$Genomic_Region)
   for (region in names(region_table)) {
@@ -58,6 +69,7 @@ if (file.exists(huang_file)) {
     cat(sprintf("  %s: %d (%.1f%%)\n", region, region_table[region], pct))
   }
 
+  # ===== CALCULATE KEY STATISTICS =====
   cat("\nBinding Location Analysis:\n")
 
   # Count genes by binding region
@@ -77,6 +89,7 @@ if (file.exists(huang_file)) {
               length(only_genic)))
   cat("  >>> These are MISSED by promoter-only motif searches!\n\n")
 
+  # ===== SAVE FULL PEAK DATA =====
 
   # 1. Save complete peak-gene association table
   write.csv(huang_s3, "01_data/published/peaks/Huang_2021_ChIPseq_peaks_full.csv",
@@ -142,11 +155,14 @@ if (file.exists(huang_file)) {
   cat("  ", huang_file, "\n")
 }
 
+# ===== WANG ET AL. 2024 DAP-SEQ - FULL PEAK DATA =====
 
 cat("\n========================================\n")
+cat("SECTION 2: WANG ET AL. 2024 DAP-SEQ\n")
 cat("  Extracting FULL peak coordinates\n")
+cat("========================================\n\n")
 
-wang_file <- file.path(base_dir, "Phase2-Refined-Analysis/Manuscript/Literature",
+wang_file <- file.path(base_dir, "Phase3-Refined-Analysis/Manuscript/Literature",
                        "Wang et al DAP-Seq/plants-3024718-supplementary.xlsx")
 
 # Alternative path
@@ -242,9 +258,11 @@ if (file.exists(wang_file)) {
   cat("  ", wang_file, "\n")
 }
 
+# ===== COMPARISON SUMMARY =====
 
 cat("\n========================================\n")
 cat("COMPARISON: ChIP-seq vs DAP-seq\n")
+cat("========================================\n\n")
 
 if (exists("huang_gene_summary") && exists("wang_gene_summary")) {
 
@@ -269,9 +287,11 @@ if (exists("huang_gene_summary") && exists("wang_gene_summary")) {
   cat("  - Low overlap suggests many ChIP-seq targets are indirect\n")
 }
 
+# ===== FINAL OUTPUT FILES =====
 
 cat("\n========================================\n")
 cat("OUTPUT FILES CREATED\n")
+cat("========================================\n\n")
 
 cat("Full peak coordinate data:\n")
 cat("  1. 01_data/published/peaks/Huang_2021_ChIPseq_peaks_full.csv\n")
@@ -286,3 +306,5 @@ cat("\nLegacy format (for backward compatibility):\n")
 cat("  6. 01_data/published/Huang_2021_ChIPseq_targets.csv\n")
 cat("  7. 01_data/published/Wang_2024_DAPseq_targets.csv\n")
 
+cat("\n>>> Next step: Run 25e_binding_integration.R to integrate with DE results\n")
+cat(">>> The integration now uses ACTUAL PEAK COORDINATES, not just motif scanning\n\n")

@@ -1,17 +1,30 @@
+# Script 11: Differential Expression Analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 11: DIFFERENTIAL EXPRESSION ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/11_DE", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -22,11 +35,25 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/10_DE_setup.RData")
 cat("Loaded checkpoint from script 10\n")
 cat("  DGEList:", nrow(dge), "genes x", ncol(dge), "samples\n")
 cat("  Design matrix:", nrow(design), "x", ncol(design), "\n")
 cat("  Contrast matrix:", ncol(contrast_matrix), "contrasts\n\n")
+
+# ===== SECTION 2: ESTIMATE DISPERSIONS =====
+
+cat("========================================\n")
+cat("SECTION 2: ESTIMATE DISPERSIONS\n")
+cat("========================================\n\n")
+
 cat("Estimating dispersions with robust=TRUE...\n")
 cat("  (This accounts for outlier genes)\n\n")
 
@@ -49,6 +76,13 @@ plotBCV(dge, main = "Biological Coefficient of Variation")
 
 dev.off()
 cat("  Saved: 03_results/figures/11_DE/BCV_plot.png\n\n")
+
+# ===== SECTION 3: FIT QUASI-LIKELIHOOD MODEL =====
+
+cat("========================================\n")
+cat("SECTION 3: FIT QL MODEL\n")
+cat("========================================\n\n")
+
 cat("Fitting quasi-likelihood GLM with robust=TRUE...\n")
 
 # Fit the model
@@ -77,6 +111,13 @@ plotQLDisp(fit, main = "Quasi-Likelihood Dispersion")
 
 dev.off()
 cat("  Saved: 03_results/figures/11_DE/QL_dispersion.png\n\n")
+
+# ===== SECTION 4: TEST ALL CONTRASTS =====
+
+cat("========================================\n")
+cat("SECTION 4: TEST ALL CONTRASTS\n")
+cat("========================================\n\n")
+
 cat("Testing", ncol(contrast_matrix), "contrasts...\n")
 cat("  Running both glmQLFTest (standard) and glmTreat (FC threshold)...\n\n")
 
@@ -149,6 +190,13 @@ for (i in 1:ncol(contrast_matrix)) {
 }
 
 cat("\nDE testing complete!\n\n")
+
+# ===== SECTION 4B: CREATE TESTRESULTS OBJECTS =====
+
+cat("========================================\n")
+cat("SECTION 4B: CREATE DECISION MATRICES\n")
+cat("========================================\n\n")
+
 cat("Creating TestResults objects for Venn diagrams and summaries...\n")
 
 # Create decision matrices using decideTests
@@ -191,6 +239,13 @@ cat("  Treat TestResults:", nrow(edgeR_tr_coded), "genes x", ncol(edgeR_tr_coded
 cat("Summary of DE genes (glmTreat, FC > 1.2):\n")
 print(summary(edgeR_tr_coded)[, 1:min(10, ncol(edgeR_tr_coded))])
 cat("  ... (showing first 10 contrasts)\n\n")
+
+# ===== SECTION 5: SUMMARY STATISTICS =====
+
+cat("========================================\n")
+cat("SECTION 5: DE SUMMARY\n")
+cat("========================================\n\n")
+
 # Add contrast type from description
 de_summary <- merge(de_summary, contrast_desc[, c("Contrast", "Type")],
                     by = "Contrast", all.x = TRUE)
@@ -231,8 +286,11 @@ if (nrow(pooled_result) > 0) {
   print(pooled_result[, c("Contrast", "Total_DE", "Up", "Down")])
 }
 
+# ===== SECTION 6: VISUALIZE DE SUMMARY =====
 
 cat("\n========================================\n")
+cat("SECTION 6: DE VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # --- Plot 3: DE gene counts barplot ---
 cat("Creating DE summary barplot...\n")
@@ -302,8 +360,11 @@ if (nrow(between_de) > 0) {
   cat("  Saved: 03_results/figures/11_DE/DE_barplot_between_lines.png\n")
 }
 
+# ===== SECTION 7: SAVE OUTPUTS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SAVE OUTPUTS\n")
+cat("========================================\n\n")
 
 # Save DE summary
 write.csv(de_summary, "03_results/tables/DE_summary.csv", row.names = FALSE)
@@ -321,14 +382,20 @@ cat("Saved: 03_results/checkpoints/11_DE_results.RData\n")
 cat("  Includes: de_results (standard), de_results_treat (FC threshold)\n")
 cat("  Includes: edgeR_coded, edgeR_tr_coded (TestResults objects)\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 11: DE ANALYSIS - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -344,3 +411,5 @@ for (kc in key_contrasts) {
   }
 }
 cat("\n")
+cat("  Next: Run 12_DE_results.R\n")
+cat("================================================================\n")

@@ -1,19 +1,32 @@
+# Script 25b: Promoter Motif Analysis
 # Main promoter motif scanning and enrichment analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 25b: PROMOTER MOTIF ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/promoter", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/25b_promoter", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "ggplot2",
   "dplyr",
@@ -41,9 +54,17 @@ for (pkg in required_packages) {
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  All packages loaded\n\n")
 
+# ===== DEFINE PARAMETERS =====
 
 PROMOTER_LENGTH <- 3000  # bp upstream of TSS (validated from Huang et al. 2021 ChIP-seq)
 MIN_MOTIF_SCORE <- 0.8   # For PWM matching (if used)
+
+# ===== DEFINE GmJAG1 BINDING MOTIFS =====
+
+cat("========================================\n")
+cat("SECTION 1: DEFINE GmJAG1 BINDING MOTIFS\n")
+cat("========================================\n\n")
+
 # These are the experimentally validated GmJAG1 binding motifs
 gmjag1_motifs <- list(
   M0 = list(
@@ -85,6 +106,13 @@ motif_table <- data.frame(
   stringsAsFactors = FALSE
 )
 write.csv(motif_table, "03_results/tables/promoter/GmJAG1_motifs.csv", row.names = FALSE)
+
+# ===== LOAD GENOME AND ANNOTATION =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD GENOME AND ANNOTATION\n")
+cat("========================================\n\n")
+
 # File paths
 genome_file <- "01_data/genome/Gmax_880_v6.0.fa"
 gff_file <- "01_data/genome/Gmax_880_Wm82.a6.v1.gene.gff3"
@@ -111,6 +139,13 @@ cat("  Total features:", length(gff), "\n")
 # Filter to genes only
 genes <- gff[gff$type == "gene"]
 cat("  Genes found:", length(genes), "\n\n")
+
+# ===== LOAD JAG1 TARGETS =====
+
+cat("========================================\n")
+cat("SECTION 3: LOAD JAG1 TARGETS\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/14_JAG1_targets.RData")
 
 jag1_targets <- target_table[target_table$Confidence_Tier != "Not_Target", ]
@@ -124,6 +159,13 @@ cat("\n")
 
 # Get target gene IDs
 target_genes <- unique(jag1_targets$GeneID)
+
+# ===== EXTRACT PROMOTER SEQUENCES =====
+
+cat("========================================\n")
+cat("SECTION 4: EXTRACT PROMOTER SEQUENCES\n")
+cat("========================================\n\n")
+
 cat("Extracting", PROMOTER_LENGTH, "bp upstream of TSS...\n\n")
 
 # Function to extract promoter for a gene
@@ -227,6 +269,13 @@ for (i in seq_along(bg_gene_ids)) {
 close(pb)
 
 cat("\n\nBackground promoters extracted:", length(bg_promoters), "\n\n")
+
+# ===== SCAN FOR MOTIFS =====
+
+cat("========================================\n")
+cat("SECTION 5: SCAN FOR GmJAG1 MOTIFS\n")
+cat("========================================\n\n")
+
 # Function to count motif occurrences
 count_motif <- function(sequence, motif, allow_rc = TRUE) {
   seq_obj <- DNAString(sequence)
@@ -308,6 +357,13 @@ bg_motif_counts$Total_motifs <- bg_motif_counts$M0_count +
 bg_motif_counts$Has_any_motif <- bg_motif_counts$Total_motifs > 0
 
 cat("\nBackground motif scanning complete\n\n")
+
+# ===== ENRICHMENT ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 6: MOTIF ENRICHMENT ANALYSIS\n")
+cat("========================================\n\n")
+
 # Calculate enrichment for each motif
 enrichment_results <- data.frame(
   Motif = c("M0", "M1", "M2", "Any_motif"),
@@ -370,11 +426,19 @@ enrichment_results$FDR <- p.adjust(enrichment_results$P_value, method = "BH")
 enrichment_results$Significant <- enrichment_results$FDR < 0.05
 
 cat("MOTIF ENRICHMENT RESULTS:\n")
+cat("========================\n\n")
 print(enrichment_results[, c("Motif", "Motif_Sequence", "Target_percent",
                               "Background_percent", "Fold_enrichment", "P_value")])
 cat("\n")
 
 write.csv(enrichment_results, "03_results/tables/promoter/motif_enrichment.csv", row.names = FALSE)
+
+# ===== TIER-SPECIFIC ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 7: TIER-SPECIFIC MOTIF ANALYSIS\n")
+cat("========================================\n\n")
+
 tier_motif_summary <- target_motif_counts %>%
   group_by(Tier) %>%
   summarise(
@@ -393,6 +457,13 @@ print(as.data.frame(tier_motif_summary))
 cat("\n")
 
 write.csv(tier_motif_summary, "03_results/tables/promoter/tier_motif_summary.csv", row.names = FALSE)
+
+# ===== HIGH PRIORITY TARGETS =====
+
+cat("========================================\n")
+cat("SECTION 8: HIGH PRIORITY TARGETS\n")
+cat("========================================\n\n")
+
 # Targets with multiple motif types
 high_motif_targets <- target_motif_counts[target_motif_counts$N_motif_types >= 2, ]
 cat("Targets with 2+ motif types:", nrow(high_motif_targets), "\n")
@@ -409,8 +480,11 @@ if (nrow(all_motif_targets) > 0) {
 
 write.csv(target_motif_counts, "03_results/tables/promoter/target_motif_counts.csv", row.names = FALSE)
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 9: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: Motif enrichment bar plot
 png("03_results/figures/25b_promoter/motif_enrichment.png",
@@ -516,8 +590,11 @@ text(4.5, mean(bg_motif_counts$Has_any_motif) * 100 + 1, "Background", cex = 0.8
 dev.off()
 cat("Saved: motif_presence_summary.png\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 10: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 promoter_analysis <- list(
   motifs = gmjag1_motifs,
@@ -544,9 +621,13 @@ save(
 
 cat("Checkpoint saved: 25b_promoter_motifs.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 25b COMPLETE: PROMOTER MOTIF ANALYSIS\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("ANALYSIS SUMMARY:\n")
 cat("  Promoter length analyzed:", PROMOTER_LENGTH, "bp\n")
@@ -577,3 +658,4 @@ cat("  - 03_results/tables/promoter/tier_motif_summary.csv\n")
 cat("  - 03_results/tables/promoter/target_motif_counts.csv\n")
 cat("  - 03_results/figures/25b_promoter/*.png\n\n")
 
+cat("NEXT: Run Script 25c for motif position distribution analysis\n\n")

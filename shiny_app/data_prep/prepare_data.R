@@ -1,17 +1,17 @@
 #!/usr/bin/env Rscript
-# Preprocess data for Shiny dashboard
+# Preprocess data for Shiny dashboard (Phase3)
 
 library(dplyr)
 library(readr)
 library(tidyr)
 
-# Paths
-base_path <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+# Paths — Phase3
+base_path <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 tables_path <- file.path(base_path, "03_results/tables")
 data_path <- file.path(base_path, "01_data")
 output_path <- file.path(base_path, "GmJAG1_Dashboard/data")
 
-cat("=== Preparing Shiny Dashboard Data ===\n\n")
+cat("=== Preparing Shiny Dashboard Data (Phase3) ===\n\n")
 
 # -----------------------------------------------------------------------------
 # 1. Experimental Design (Sample Metadata)
@@ -22,34 +22,28 @@ saveRDS(exp_design, file.path(output_path, "experimental_design.rds"), compress 
 cat("   Saved:", nrow(exp_design), "samples\n")
 
 # -----------------------------------------------------------------------------
-# 2. Expression Matrix (from Salmon output)
+# 2. Expression Matrix (voom-transformed, batch-corrected — matches publication)
 # -----------------------------------------------------------------------------
-cat("\n2. Processing expression data...\n")
-load(file.path(data_path, "SalmonSummarizedOutput.RData"))
+cat("\n2. Processing expression data (voom-transformed, batch-corrected)...\n")
+checkpoint_path <- file.path(base_path, "03_results/checkpoints/06_validated.RData")
+load(checkpoint_path)
 
-# tx.all contains counts and abundance (TPM)
-if (exists("tx.all")) {
-  # TPM matrix for expression viewer
-  tpm_matrix <- tx.all$abundance
+if (exists("v_primary")) {
+  expr_matrix <- v_primary$E
 
-  # Clean column names - strip "salmo" prefix to match experimental design
-  colnames(tpm_matrix) <- gsub("^salmo", "", colnames(tpm_matrix))
+  cat("   Loaded v_primary$E:", nrow(expr_matrix), "genes x", ncol(expr_matrix), "samples\n")
+  cat("   Sample names (first 3):", paste(head(colnames(expr_matrix), 3), collapse = ", "), "\n")
+  cat("   Value range:", round(min(expr_matrix), 2), "to", round(max(expr_matrix), 2), "\n")
 
-  # Keep top 20,000 most variable genes for performance
-  gene_var <- apply(tpm_matrix, 1, var, na.rm = TRUE)
-  top_genes <- names(sort(gene_var, decreasing = TRUE))[1:min(20000, length(gene_var))]
-  tpm_subset <- tpm_matrix[top_genes, ]
-
-  saveRDS(tpm_subset, file.path(output_path, "expression_matrix.rds"), compress = "xz")
-  cat("   Saved:", nrow(tpm_subset), "genes x", ncol(tpm_subset), "samples\n")
-  cat("   Sample names (first 3):", paste(head(colnames(tpm_subset), 3), collapse = ", "), "\n")
+  saveRDS(expr_matrix, file.path(output_path, "expression_matrix.rds"), compress = "xz")
+  cat("   Saved: expression_matrix.rds\n")
 
   # Full gene list for lookup
-  gene_list <- data.frame(GeneID = rownames(tpm_matrix))
+  gene_list <- data.frame(GeneID = rownames(expr_matrix))
   saveRDS(gene_list, file.path(output_path, "gene_list.rds"), compress = "xz")
   cat("   Full gene list:", nrow(gene_list), "genes\n")
 } else {
-  cat("   WARNING: tx.all not found in RData file\n")
+  cat("   WARNING: v_primary not found in checkpoint\n")
 }
 
 # -----------------------------------------------------------------------------
@@ -227,7 +221,7 @@ cat("\n6. Processing GO enrichment...\n")
 
 # Use combined module GO file for more comprehensive data
 go_combined_file <- file.path(tables_path, "functional/modules/GO_all_modules_combined.csv")
-go_targets_file <- file.path(tables_path, "functional/GO_all_targets.csv")
+go_targets_file <- file.path(tables_path, "functional/GO_all_targets_combined.csv")
 
 if (file.exists(go_combined_file)) {
   go_results <- read_csv(go_combined_file, show_col_types = FALSE)
@@ -250,15 +244,40 @@ if (file.exists(go_combined_file)) {
   cat("   GO terms:", nrow(go_results), "\n")
 }
 
-# GO by tier
+# GO by tier — Phase3 has separate BP/CC/MF files per tier
 for (tier in c("gold", "silver", "bronze")) {
+  # Try combined first, then fall back to BP
   tier_file <- file.path(tables_path, paste0("functional/GO_", tier, "_tier.csv"))
+  tier_file_bp <- file.path(tables_path, paste0("functional/GO_", tier, "_tier_BP.csv"))
+
   if (file.exists(tier_file)) {
     tier_go <- read_csv(tier_file, show_col_types = FALSE)
+  } else if (file.exists(tier_file_bp)) {
+    # Combine BP + CC + MF for this tier
+    # Force all columns to character first to avoid type conflicts
+    coerce_cols <- function(df) {
+      if (is.null(df)) return(NULL)
+      df %>% mutate(across(where(is.numeric), as.character))
+    }
+    bp <- tryCatch(read_csv(tier_file_bp, show_col_types = FALSE, col_types = cols(.default = "c")), error = function(e) NULL)
+    cc <- tryCatch(read_csv(file.path(tables_path, paste0("functional/GO_", tier, "_tier_CC.csv")), show_col_types = FALSE, col_types = cols(.default = "c")), error = function(e) NULL)
+    mf <- tryCatch(read_csv(file.path(tables_path, paste0("functional/GO_", tier, "_tier_MF.csv")), show_col_types = FALSE, col_types = cols(.default = "c")), error = function(e) NULL)
+    tier_go <- bind_rows(bp, cc, mf)
+    # Convert numeric columns back
+    num_cols <- c("Count", "GeneCount", "p.adjust", "pvalue", "qvalue", "FDR", "Fold_Enrichment", "RichFactor", "BgRatio_num", "GeneRatio_num")
+    for (nc in intersect(num_cols, names(tier_go))) {
+      tier_go[[nc]] <- as.numeric(tier_go[[nc]])
+    }
+  } else {
+    next
+  }
+
+  if (!is.null(tier_go) && nrow(tier_go) > 0) {
     if (!"Description" %in% names(tier_go) && "GO_ID" %in% names(tier_go)) {
       tier_go$Description <- tier_go$GO_ID
     }
     saveRDS(tier_go, file.path(output_path, paste0("go_", tier, ".rds")))
+    cat("   GO", tier, "tier:", nrow(tier_go), "terms\n")
   }
 }
 
@@ -279,10 +298,15 @@ if (file.exists(pheno_file)) {
 gene_pheno_file <- file.path(tables_path, "phenotype/gene_phenotype_correlations.csv")
 if (file.exists(gene_pheno_file)) {
   gene_pheno <- read_csv(gene_pheno_file, show_col_types = FALSE)
-  # Keep top correlated genes (use Cor_LW_Ratio column)
-  gene_pheno_top <- gene_pheno %>%
-    arrange(desc(abs(Cor_LW_Ratio))) %>%
-    head(5000)
+  # Keep top correlated genes (use Cor_LW_Ratio column if present, else first cor column)
+  cor_col <- intersect(c("Cor_LW_Ratio", "Cor_V1_Ratio"), names(gene_pheno))[1]
+  if (!is.na(cor_col)) {
+    gene_pheno_top <- gene_pheno %>%
+      arrange(desc(abs(.data[[cor_col]]))) %>%
+      head(5000)
+  } else {
+    gene_pheno_top <- head(gene_pheno, 5000)
+  }
   saveRDS(gene_pheno_top, file.path(output_path, "gene_phenotype_cors.rds"), compress = "xz")
   cat("   Gene-phenotype: top 5000 correlations\n")
 }
@@ -296,24 +320,6 @@ if (file.exists(qc_file)) {
   qc_metrics <- read_csv(qc_file, show_col_types = FALSE)
   saveRDS(qc_metrics, file.path(output_path, "qc_metrics.rds"))
   cat("   QC metrics:", nrow(qc_metrics), "samples\n")
-}
-
-# PCA data from checkpoint
-pca_checkpoint <- file.path(base_path, "03_results/checkpoints/07_PCA_complete.RData")
-if (file.exists(pca_checkpoint)) {
-  load(pca_checkpoint)
-  if (exists("pca_results")) {
-    pca_data <- data.frame(
-      Sample = rownames(pca_results$x),
-      PC1 = pca_results$x[, 1],
-      PC2 = pca_results$x[, 2],
-      PC3 = pca_results$x[, 3]
-    )
-    pca_var <- summary(pca_results)$importance[2, 1:3] * 100
-
-    saveRDS(list(coords = pca_data, variance = pca_var), file.path(output_path, "pca_data.rds"))
-    cat("   PCA data saved\n")
-  }
 }
 
 # -----------------------------------------------------------------------------
@@ -368,43 +374,27 @@ if (file.exists(temporal_file)) {
 }
 
 # -----------------------------------------------------------------------------
-# 11. PCA Data (compute from expression matrix)
+# 11. PCA Data (from voom-transformed expression — matches publication Fig 2A)
 # -----------------------------------------------------------------------------
-cat("\n11. Computing PCA from expression data...\n")
-if (exists("tpm_subset")) {
-  # Print sample names for debugging
-  cat("   Expression matrix sample names (first 3):", paste(head(colnames(tpm_subset), 3), collapse = ", "), "\n")
-  cat("   Experimental design Sample (first 3):", paste(head(exp_design$Sample, 3), collapse = ", "), "\n")
-
-  # Remove genes with zero variance
-  gene_var <- apply(tpm_subset, 1, var, na.rm = TRUE)
-
-  # Run PCA on top 5000 most variable genes for speed
-  top_var_genes <- names(sort(gene_var[gene_var > 0], decreasing = TRUE))[1:min(5000, sum(gene_var > 0))]
-  expr_pca <- t(tpm_subset[top_var_genes, ])
+cat("\n11. Computing PCA from voom-transformed expression...\n")
+if (exists("expr_matrix")) {
+  # Use ALL genes (same as publication Fig2A_PCA.R)
+  expr_pca <- t(expr_matrix)
 
   pca_result <- prcomp(expr_pca, scale. = TRUE, center = TRUE)
 
-  # Create PCA data for dashboard - fix sample names
-  pca_samples_raw <- rownames(pca_result$x)
-
-  # Expression matrix uses "salmoXXX" format, experimental design uses "XXX"
-  # Strip "salmo" prefix to match experimental design Sample column
-  pca_samples_clean <- gsub("^salmo", "", pca_samples_raw)
-
   pca_data <- data.frame(
-    Sample = pca_samples_clean,
+    Sample = rownames(pca_result$x),
     PC1 = pca_result$x[, 1],
     PC2 = pca_result$x[, 2],
     PC3 = pca_result$x[, 3]
   )
 
-  # Variance explained
   var_explained <- summary(pca_result)$importance[2, 1:3] * 100
 
-  # Check if sample names now match experimental design
-  match_sample <- sum(pca_samples_clean %in% exp_design$Sample)
-  cat("   Sample name matches after cleaning:", match_sample, "of", length(pca_samples_clean), "\n")
+  # Verify sample name matching
+  match_sample <- sum(pca_data$Sample %in% exp_design$Sample)
+  cat("   Sample name matches:", match_sample, "of", nrow(pca_data), "\n")
 
   saveRDS(list(coords = pca_data, variance = var_explained), file.path(output_path, "pca_data.rds"))
   cat("   PCA computed:", nrow(pca_data), "samples, variance explained:",

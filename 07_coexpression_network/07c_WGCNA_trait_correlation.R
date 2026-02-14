@@ -1,17 +1,30 @@
+# Script 20: Module-Trait Correlation Analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 20: MODULE-TRAIT CORRELATION ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/20_WGCNA_traits", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "WGCNA",
   "ggplot2",
@@ -25,10 +38,24 @@ required_packages <- c(
 invisible(lapply(required_packages, library, character.only = TRUE))
 enableWGCNAThreads()
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINTS =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/19_WGCNA_eigengenes.RData")
 cat("Loaded WGCNA eigengene data\n")
 cat("  Modules:", ncol(MEs), "\n")
 cat("  Samples:", nrow(MEs), "\n\n")
+
+# ===== LOAD PHENOTYPE DATA =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD LEAF PHENOTYPE DATA\n")
+cat("========================================\n\n")
+
 phenotype_file <- "01_data/soybean_leaf_data_long_format.csv"
 
 if (file.exists(phenotype_file)) {
@@ -53,6 +80,13 @@ if (file.exists(phenotype_file)) {
   pheno_v1v2 <- pheno_wide[pheno_wide$Leaf_Type %in% c("V1", "V2"), ]
 
   cat("V1/V2 leaf measurements:", nrow(pheno_v1v2), "observations\n\n")
+
+  # ===== CALCULATE PHENOTYPE SUMMARY STATISTICS =====
+
+  cat("========================================\n")
+  cat("SECTION 2B: PHENOTYPE SUMMARY\n")
+  cat("========================================\n\n")
+
   # Calculate mature leaf characteristics (using measurements from later days)
   # V1 leaves - use days when V1 is fully developed (later measurements)
   v1_mature <- pheno_v1v2[pheno_v1v2$Leaf_Type == "V1" & !is.na(pheno_v1v2$Ratio), ]
@@ -141,6 +175,13 @@ if (file.exists(phenotype_file)) {
   cat("Continuing with categorical traits only...\n\n")
   phenotype_available <- FALSE
 }
+
+# ===== CREATE TRAIT MATRIX =====
+
+cat("========================================\n")
+cat("SECTION 3: CREATE TRAIT MATRIX\n")
+cat("========================================\n\n")
+
 # Create binary trait variables
 traitData <- data.frame(
   # Leaf type (Narrow = 1, Broad = 0)
@@ -171,6 +212,7 @@ traitData$Broad_TP2 <- as.numeric(targets$Leaf_type == "Broad" & targets$Timepoi
 traitData$Broad_TP3 <- as.numeric(targets$Leaf_type == "Broad" & targets$Timepoint == "TP3")
 traitData$Broad_TP4 <- as.numeric(targets$Leaf_type == "Broad" & targets$Timepoint == "TP4")
 
+# ===== ADD LINE-SPECIFIC L:W RATIO (ACTUAL PHENOTYPE) =====
 # These are the actual measured leaf length:width ratios for each line
 # Narrow lines: PI612713B = 2.36, PI547745 = 2.16
 # Broad lines: LD112170 = 1.59, PI532462A = 1.55
@@ -192,6 +234,7 @@ cat("    PI547745 (Narrow): 2.16\n")
 cat("    LD112170 (Broad): 1.59\n")
 cat("    PI532462A (Broad): 1.55\n\n")
 
+# ===== ADD PHENOTYPE MEASUREMENTS AS CONTINUOUS TRAITS =====
 
 if (phenotype_available) {
   cat("Adding continuous phenotype traits...\n\n")
@@ -262,6 +305,13 @@ if (phenotype_available) {
   cat("  Phenotype:", paste(grep("V[12]_", colnames(traitData), value = TRUE), collapse = ", "), "\n")
 }
 cat("\n")
+
+# ===== CALCULATE CORRELATIONS =====
+
+cat("========================================\n")
+cat("SECTION 4: MODULE-TRAIT CORRELATIONS\n")
+cat("========================================\n\n")
+
 # Calculate correlations
 nSamples <- nrow(MEs)
 moduleTraitCor <- cor(MEs, traitData, use = "pairwise.complete.obs")
@@ -269,6 +319,13 @@ moduleTraitPvalue <- corPvalueStudent(moduleTraitCor, nSamples)
 
 cat("Calculated correlations for", nrow(moduleTraitCor), "modules x",
     ncol(moduleTraitCor), "traits\n\n")
+
+# ===== MAIN HEATMAP =====
+
+cat("========================================\n")
+cat("SECTION 5: TRAIT CORRELATION HEATMAPS\n")
+cat("========================================\n\n")
+
 # Create text matrix with correlation and p-value
 textMatrix <- paste(signif(moduleTraitCor, 2), "\n(",
                     signif(moduleTraitPvalue, 1), ")", sep = "")
@@ -330,8 +387,11 @@ labeledHeatmap(
 dev.off()
 cat("Saved: module_trait_full.png\n")
 
+# ===== NARROW vs BROAD COMPARISON =====
 
 cat("\n========================================\n")
+cat("SECTION 6: NARROW vs BROAD MODULE DIFFERENCES\n")
+cat("========================================\n\n")
 
 # Calculate difference in correlation (Narrow - Broad) at each timepoint
 diff_matrix <- matrix(0, nrow = nrow(moduleTraitCor), ncol = 5)
@@ -366,8 +426,11 @@ labeledHeatmap(
 dev.off()
 cat("Saved: module_trait_leaf_differences.png\n")
 
+# ===== IDENTIFY SIGNIFICANT MODULES =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SIGNIFICANT MODULES\n")
+cat("========================================\n\n")
 
 # Find modules significantly associated with Narrow leaf type
 sig_threshold <- 0.05
@@ -422,8 +485,11 @@ sig_narrow_tp0 <- sig_narrow_tp0[order(sig_narrow_tp0$P_value), ]
 cat("\nModules significantly correlated with Narrow_TP0 (p < 0.05):\n")
 print(sig_narrow_tp0[sig_narrow_tp0$Significant, c("Module", "Correlation", "P_value")])
 
+# ===== CREATE SUMMARY TABLE =====
 
 cat("\n========================================\n")
+cat("SECTION 8: SUMMARY TABLES\n")
+cat("========================================\n\n")
 
 # Combine all correlations and p-values
 trait_summary <- data.frame(
@@ -472,7 +538,10 @@ write.csv(trait_summary, "03_results/tables/WGCNA/module_trait_correlations.csv"
           row.names = FALSE)
 cat("Saved: module_trait_correlations.csv\n")
 
+# ===== COMPARISON: BINARY vs LINE-SPECIFIC L:W RATIO =====
 cat("\n========================================\n")
+cat("SECTION 8B: BINARY vs LINE-SPECIFIC PHENOTYPE COMPARISON\n")
+cat("========================================\n\n")
 
 cat("Comparing module correlations:\n")
 cat("  Binary (Narrow): 2 unique values (0 or 1)\n")
@@ -553,8 +622,11 @@ top_line <- head(trait_summary[order(abs(trait_summary$Cor_Line_LW), decreasing 
                                 c("Module", "Cor_Line_LW", "P_Line_LW")], 6)
 print(top_line)
 
+# ===== VISUALIZE TOP MODULES =====
 
 cat("\n========================================\n")
+cat("SECTION 9: TOP MODULE VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Select top modules by various criteria
 top_narrow <- head(trait_summary$Module[order(abs(trait_summary$Cor_Narrow), decreasing = TRUE)], 6)
@@ -619,6 +691,7 @@ for (me_name in top_modules) {
 dev.off()
 cat("Saved: top_modules_temporal.png\n")
 
+# ===== BOXPLOTS BY CONDITION =====
 
 png("03_results/figures/20_WGCNA_traits/top_modules_boxplots.png",
     width = 1200, height = 1000, res = 120)
@@ -653,8 +726,11 @@ for (me_name in top_modules) {
 dev.off()
 cat("Saved: top_modules_boxplots.png\n")
 
+# ===== CORRELATION PLOT =====
 
 cat("\n========================================\n")
+cat("SECTION 10: CORRELATION SUMMARY PLOT\n")
+cat("========================================\n\n")
 
 png("03_results/figures/20_WGCNA_traits/correlation_summary.png",
     width = 1000, height = 800, res = 120)
@@ -692,8 +768,15 @@ legend("topleft", legend = c("Significant (Narrow_TP0)", "Not significant"),
 
 dev.off()
 cat("Saved: correlation_summary.png\n")
+
+# ===== SAVE CHECKPOINT =====
+
+# ===== PHENOTYPE-SPECIFIC ANALYSIS =====
+
 if (phenotype_available) {
   cat("\n========================================\n")
+  cat("SECTION 11: PHENOTYPE TRAIT CORRELATIONS\n")
+  cat("========================================\n\n")
 
   # Create heatmap for phenotype traits only
   pheno_traits <- grep("V[12]_", colnames(moduleTraitCor), value = TRUE)
@@ -786,8 +869,11 @@ if (phenotype_available) {
   }
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 12: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Prepare objects to save
 objects_to_save <- c(
@@ -830,9 +916,13 @@ save(
 
 cat("Checkpoint saved: 20_WGCNA_traits.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 20 COMPLETE: MODULE-TRAIT CORRELATION ANALYSIS\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Modules significantly correlated with Narrow:",
@@ -881,3 +971,4 @@ if (phenotype_available) {
 }
 cat("\n")
 
+cat("NEXT STEP: Run Script 21 for JAG1 module analysis and hub genes\n\n")

@@ -1,18 +1,31 @@
+# Script 22.1: WGCNA Module GO Enrichment
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 22.1: WGCNA MODULE GO ENRICHMENT\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/functional/modules", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/22.1_module_GO", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "WGCNA",
   "ggplot2",
@@ -24,6 +37,13 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINTS =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load WGCNA results
 load("03_results/checkpoints/21_WGCNA_JAG1.RData")
 cat("Loaded WGCNA JAG1 analysis data\n")
@@ -45,6 +65,13 @@ names(module_colors_all) <- genes_in_wgcna
 
 cat("Genes in WGCNA:", length(genes_in_wgcna), "\n")
 cat("Modules:", length(unique(module_assignments)), "\n\n")
+
+# ===== LOAD GO ANNOTATIONS =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD GO ANNOTATIONS\n")
+cat("========================================\n\n")
+
 # Load annotation file
 annotation_file <- file.path(base_dir, "Phase1-Exploratory", "Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
 
@@ -104,8 +131,11 @@ if (file.exists(annotation_file)) {
   has_go_mapping <- FALSE
 }
 
+# ===== DEFINE GO ENRICHMENT FUNCTION =====
 
 cat("\n========================================\n")
+cat("SECTION 3: GO ENRICHMENT FUNCTION\n")
+cat("========================================\n\n")
 
 perform_go_enrichment <- function(gene_list, background, go_mapping,
                                   pval_cutoff = 0.05, min_genes = 5) {
@@ -168,8 +198,11 @@ perform_go_enrichment <- function(gene_list, background, go_mapping,
 
 cat("GO enrichment function defined\n")
 
+# ===== IDENTIFY KEY MODULES =====
 
 cat("\n========================================\n")
+cat("SECTION 4: IDENTIFY KEY MODULES\n")
+cat("========================================\n\n")
 
 # Key modules based on our previous analysis:
 # 1. Modules enriched for JAG1 targets
@@ -202,6 +235,13 @@ for (i in 1:nrow(key_modules)) {
 cat("Key modules to analyze:\n")
 print(key_modules)
 cat("\n")
+
+# ===== RUN GO ENRICHMENT ON KEY MODULES =====
+
+cat("========================================\n")
+cat("SECTION 5: MODULE GO ENRICHMENT\n")
+cat("========================================\n\n")
+
 module_go_results <- list()
 
 if (has_go_mapping) {
@@ -275,8 +315,11 @@ if (has_go_mapping) {
   cat("No GO mapping available. Cannot perform module enrichment.\n")
 }
 
+# ===== CREATE COMBINED RESULTS TABLE =====
 
 cat("\n========================================\n")
+cat("SECTION 6: COMBINED RESULTS\n")
+cat("========================================\n\n")
 
 if (length(module_go_results) > 0) {
 
@@ -321,8 +364,11 @@ if (length(module_go_results) > 0) {
             row.names = FALSE)
 }
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 if (length(module_go_results) > 0) {
 
@@ -448,8 +494,11 @@ if (length(module_go_results) > 0) {
   }
 }
 
+# ===== BIOLOGICAL INTERPRETATION =====
 
 cat("\n========================================\n")
+cat("SECTION 8: BIOLOGICAL INTERPRETATION\n")
+cat("========================================\n\n")
 
 cat("KEY FINDINGS:\n\n")
 
@@ -495,8 +544,11 @@ if (length(module_go_results) > 0) {
   }
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 9: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 module_go_analysis <- list(
   module_go_results = module_go_results,
@@ -518,9 +570,13 @@ save(
 
 cat("Checkpoint saved: 22.1_module_GO.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 22.1 COMPLETE: WGCNA MODULE GO ENRICHMENT\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Modules analyzed:", length(module_go_results), "\n")
@@ -545,3 +601,4 @@ cat("  - Lightgreen module (r=0.955): Functions directly linked to leaf shape\n"
 cat("  - Lightcyan module (15.99x): Core JAG1-regulated functions\n")
 cat("  - Different modules = different regulatory pathways\n\n")
 
+cat("NEXT STEP: Continue to Script 23 (KEGG pathways) or integrate results\n\n")

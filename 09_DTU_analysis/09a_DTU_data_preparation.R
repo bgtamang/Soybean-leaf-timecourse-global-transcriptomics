@@ -1,18 +1,31 @@
+# Script 40: DTU (Differential Transcript Usage) Data Preparation
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 40: DTU DATA PREPARATION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/40_DTU", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/tables", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "tximport",         # For Salmon import
   "dplyr",            # For data manipulation
@@ -36,6 +49,13 @@ for (pkg in required_packages) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== SECTION 1: LOAD SALMON OUTPUT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD SALMON OUTPUT\n")
+cat("========================================\n\n")
+
 # Load the Salmon summarized output which contains transcript-level quantification
 salmon_file <- "01_data/SalmonSummarizedOutput.RData"
 if (!file.exists(salmon_file)) {
@@ -72,6 +92,13 @@ if (exists("tx.all")) {
 cat("\nSample transcript IDs:\n")
 head_tx <- head(rownames(tx_counts), 10)
 cat("  ", paste(head_tx, collapse = "\n  "), "\n\n")
+
+# ===== SECTION 2: LOAD SAMPLE METADATA =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD SAMPLE METADATA\n")
+cat("========================================\n\n")
+
 # Load sample metadata from checkpoint
 # Try multiple possible checkpoint names
 metadata_files <- c(
@@ -146,6 +173,13 @@ cat("  Samples:", nrow(targets), "\n")
 cat("\nSample distribution:\n")
 print(table(targets$Leaf_type, targets$Timepoint))
 cat("\n")
+
+# ===== SECTION 3: CREATE TX2GENE MAPPING =====
+
+cat("========================================\n")
+cat("SECTION 3: CREATE TX2GENE MAPPING\n")
+cat("========================================\n\n")
+
 # Extract gene IDs from transcript IDs
 # Soybean transcript IDs: Glyma.20G116200.1 -> Gene: Glyma.20G116200
 transcript_ids <- rownames(tx_counts)
@@ -171,6 +205,13 @@ print(summary(tx_per_gene$n_tx))
 cat("  Genes with 1 transcript:", sum(tx_per_gene$n_tx == 1), "\n")
 cat("  Genes with 2+ transcripts:", sum(tx_per_gene$n_tx >= 2), "\n")
 cat("  Genes with 5+ transcripts:", sum(tx_per_gene$n_tx >= 5), "\n\n")
+
+# ===== SECTION 4: FILTER TRANSCRIPTS =====
+
+cat("========================================\n")
+cat("SECTION 4: FILTER TRANSCRIPTS\n")
+cat("========================================\n\n")
+
 # Filtering criteria:
 # 1. Minimum expression: >= 10 counts in at least 3 samples
 # 2. Focus on genes with >= 2 expressed transcripts (needed for DTU)
@@ -178,6 +219,7 @@ cat("  Genes with 5+ transcripts:", sum(tx_per_gene$n_tx >= 5), "\n\n")
 min_counts <- 10
 min_samples <- 3
 
+# Step 1: Filter by expression
 expressed <- rowSums(tx_counts >= min_counts) >= min_samples
 cat("Transcripts with >= ", min_counts, " counts in >= ", min_samples, " samples:\n", sep = "")
 cat("  Passed:", sum(expressed), "/", length(expressed), "\n")
@@ -188,6 +230,7 @@ tx_abundance_filt <- tx_abundance[expressed, ]
 # Update tx2gene
 tx2gene_filt <- tx2gene[tx2gene$TXNAME %in% rownames(tx_counts_filt), ]
 
+# Step 2: Keep only genes with >= 2 expressed transcripts
 tx_per_gene_filt <- tx2gene_filt %>%
   group_by(GENEID) %>%
   summarise(n_tx = n(), .groups = "drop")
@@ -204,6 +247,13 @@ tx2gene_filt <- tx2gene_filt[tx2gene_filt$TXNAME %in% keep_tx, ]
 cat("\nAfter filtering:\n")
 cat("  Transcripts:", nrow(tx_counts_filt), "\n")
 cat("  Genes:", length(unique(tx2gene_filt$GENEID)), "\n\n")
+
+# ===== SECTION 5: CALCULATE TRANSCRIPT PROPORTIONS =====
+
+cat("========================================\n")
+cat("SECTION 5: CALCULATE TRANSCRIPT PROPORTIONS\n")
+cat("========================================\n\n")
+
 # Calculate transcript proportion within each gene for each sample
 # Proportion = transcript_count / sum(all_transcript_counts_for_gene)
 
@@ -240,6 +290,13 @@ prop_sd <- apply(tx_proportions, 1, sd, na.rm = TRUE)
 cat("Transcript proportion variability (SD across samples):\n")
 print(summary(prop_sd))
 cat("  Highly variable (SD > 0.1):", sum(prop_sd > 0.1), "transcripts\n\n")
+
+# ===== SECTION 6: CHECK JAG1 ISOFORMS =====
+
+cat("========================================\n")
+cat("SECTION 6: CHECK JAG1 ISOFORMS\n")
+cat("========================================\n\n")
+
 # JAG1 gene: Glyma.20G116200
 jag1_gene <- "Glyma.20G116200"
 jag1_tx <- tx2gene_filt$TXNAME[tx2gene_filt$GENEID == jag1_gene]
@@ -275,6 +332,13 @@ if (length(jag1_tx) > 0) {
 }
 
 cat("\n")
+
+# ===== SECTION 6B: DEDICATED JAG1 ISOFORM ANALYSIS (BYPASSING FILTERS) =====
+
+cat("========================================\n")
+cat("SECTION 6B: JAG1 ISOFORM ANALYSIS (TP0 FOCUS)\n")
+cat("========================================\n\n")
+
 # JAG1 is a developmental TF expressed mainly at TP0
 # Analyze isoforms using unfiltered data
 
@@ -381,6 +445,13 @@ if (length(jag1_tx_all) >= 2) {
   )
 
   cat("\n")
+
+  # ===== SECTION 6C: SAVE JAG1 ISOFORM DETAILED RESULTS =====
+
+  cat("========================================\n")
+  cat("SECTION 6C: SAVE JAG1 ISOFORM RESULTS\n")
+  cat("========================================\n\n")
+
   # Create comprehensive JAG1 isoform summary by timepoint and leaf type
   jag1_results_list <- list()
 
@@ -508,6 +579,13 @@ if (length(jag1_tx_all) >= 2) {
   cat("JAG1 has fewer than 2 transcripts, skipping isoform analysis\n\n")
   jag1_isoform_analysis <- NULL
 }
+
+# ===== SECTION 7: LOAD JAG1 TARGETS =====
+
+cat("========================================\n")
+cat("SECTION 7: LOAD JAG1 TARGETS\n")
+cat("========================================\n\n")
+
 # Load JAG1 targets for enrichment analysis
 jag1_targets_file <- "03_results/tables/JAG1_unified_targets_comprehensive.csv"
 if (file.exists(jag1_targets_file)) {
@@ -532,6 +610,13 @@ if (file.exists(jag1_targets_file)) {
 }
 
 cat("\n")
+
+# ===== SECTION 8: VISUALIZATION =====
+
+cat("========================================\n")
+cat("SECTION 8: VISUALIZATION\n")
+cat("========================================\n\n")
+
 # Plot 1: Transcripts per gene distribution
 tx_per_gene_final <- tx2gene_filt %>%
   group_by(GENEID) %>%
@@ -675,6 +760,13 @@ if (!is.null(jag1_isoform_analysis) && length(jag1_isoform_analysis$transcripts)
 }
 
 cat("\n")
+
+# ===== SECTION 9: SAVE DATA =====
+
+cat("========================================\n")
+cat("SECTION 9: SAVE DATA\n")
+cat("========================================\n\n")
+
 # Save checkpoint for next script
 save(
   tx_counts_filt,        # Filtered transcript counts
@@ -718,8 +810,13 @@ dtu_summary <- data.frame(
 write.csv(dtu_summary, "03_results/tables/dtu_data_summary.csv", row.names = FALSE)
 cat("Saved: dtu_data_summary.csv\n\n")
 
+# ===== COMPLETION =====
 
+cat("================================================================\n")
+cat("  SCRIPT 40 COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("SUMMARY:\n")
 cat("  - Loaded transcript-level quantification from Salmon\n")
@@ -730,3 +827,4 @@ cat("  - Calculated transcript proportions\n")
 cat("  - Identified", sum(prop_sd > 0.1), "highly variable transcripts\n")
 cat("  - JAG1 has", length(jag1_tx), "transcripts in dataset\n\n")
 
+cat("NEXT: Run 41_DTU_DRIMSeq_analysis.R for statistical DTU testing\n")

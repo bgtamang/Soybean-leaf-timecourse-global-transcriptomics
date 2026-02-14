@@ -1,3 +1,6 @@
+# =============================================================================
+# Script 34c: Comprehensive KRP Gene Family Verification
+# =============================================================================
 #
 # PURPOSE:
 # This script provides independent verification that the 9 soybean KRP genes
@@ -17,14 +20,17 @@
 # gene family reveals a key role for GmKRP2a in root development.
 # Front. Plant Sci. 14:1096467. DOI: 10.3389/fpls.2023.1096467
 #
+# =============================================================================
 
 # Set base directory
-base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 setwd(base_dir)
 
 library(tidyverse)
 
+# =============================================================================
 # 1. SETUP AND DATA LOADING
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMPREHENSIVE KRP GENE FAMILY VERIFICATION\n")
@@ -33,8 +39,11 @@ cat("=" %>% rep(80) %>% paste(collapse = ""), "\n\n")
 cat("Date:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("Purpose: Verify completeness of soybean KRP gene list\n\n")
 
+# -----------------------------------------------------------------------------
 # 1a. Define Guo et al. 2023 KRP genes (Literature Reference)
+# -----------------------------------------------------------------------------
 
+cat("--- STEP 1: Loading Reference Data ---\n\n")
 
 # The 9 KRP genes from Guo et al. 2023
 # Source: Table 1, Front. Plant Sci. 14:1096467
@@ -69,7 +78,9 @@ arabidopsis_krp_ids <- c(
 cat("Arabidopsis KRP genes used for ortholog search:", length(arabidopsis_krp_ids), "\n")
 cat("  ", paste(arabidopsis_krp_ids, collapse = ", "), "\n\n")
 
+# -----------------------------------------------------------------------------
 # 1b. Load Phytozome Annotation File
+# -----------------------------------------------------------------------------
 
 annotation_file <- file.path(base_dir, "01_data/Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
 
@@ -98,7 +109,9 @@ cat("  Total entries:", nrow(annotation), "\n")
 cat("  Unique loci:", nrow(annotation_loci), "\n")
 cat("  Genome version: Wm82.a6.v1 (v6)\n\n")
 
+# =============================================================================
 # 2. METHOD 1: PFAM DOMAIN SEARCH (PF02234)
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 1: PFAM DOMAIN SEARCH\n")
@@ -127,7 +140,9 @@ if (nrow(pfam_hits) > 0) {
 
 method1_genes <- pfam_hits$locusName
 
+# =============================================================================
 # 3. METHOD 2: ARABIDOPSIS ORTHOLOG SEARCH
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 2: ARABIDOPSIS ORTHOLOG SEARCH\n")
@@ -160,7 +175,9 @@ if (nrow(ortholog_hits) > 0) {
 
 method2_genes <- ortholog_hits$locusName
 
+# =============================================================================
 # 4. CROSS-VALIDATION
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("CROSS-VALIDATION ANALYSIS\n")
@@ -187,6 +204,7 @@ cat("COMPARISON SUMMARY:\n\n")
 
 # Summary statistics
 cat("Source                      | Genes Found\n")
+cat("----------------------------|------------\n")
 cat(sprintf("Guo et al. 2023 (literature)| %d\n", sum(comparison$in_guo_2023)))
 cat(sprintf("Method 1 (Pfam PF02234)     | %d\n", sum(comparison$in_pfam_search)))
 cat(sprintf("Method 2 (At orthologs)     | %d\n", sum(comparison$in_ortholog_search)))
@@ -227,7 +245,9 @@ if (nrow(new_genes) > 0) {
 }
 cat("\n")
 
+# =============================================================================
 # 5. VERIFY IN EXPRESSION DATA
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("EXPRESSION VERIFICATION\n")
@@ -268,7 +288,9 @@ if (file.exists(checkpoint_file)) {
 
 cat("\n")
 
+# =============================================================================
 # 6. CHECK JAG1 TARGET STATUS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("JAG1 TARGET STATUS\n")
@@ -304,7 +326,9 @@ if (file.exists(jag1_file)) {
 
 cat("\n")
 
+# =============================================================================
 # 7. DETAILED EXPRESSION ANALYSIS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("DETAILED EXPRESSION ANALYSIS\n")
@@ -319,7 +343,10 @@ if (exists("v_full") && exists("targets")) {
 
   if (length(krp_in_data) > 0) {
 
+    # -------------------------------------------------------------------------
     # 7a. Calculate CPM (Counts Per Million)
+    # -------------------------------------------------------------------------
+    cat("--- 7a. CPM Analysis ---\n\n")
 
     # Get raw counts if available, otherwise use normalized values
     if (exists("dge_full") && !is.null(dge_full$counts)) {
@@ -351,7 +378,10 @@ if (exists("v_full") && exists("targets")) {
       )
     }
 
+    # -------------------------------------------------------------------------
     # 7b. Expression by Genotype (Broad vs Narrow)
+    # -------------------------------------------------------------------------
+    cat("--- 7b. Expression by Genotype ---\n\n")
 
     broad_samples <- which(targets$Leaf_type == "Broad")
     narrow_samples <- which(targets$Leaf_type == "Narrow")
@@ -386,7 +416,10 @@ if (exists("v_full") && exists("targets")) {
 
     cat("\n")
 
+    # -------------------------------------------------------------------------
     # 7c. Summary Statistics
+    # -------------------------------------------------------------------------
+    cat("--- 7c. Expression Level Summary ---\n\n")
 
     n_very_low <- sum(krp_expression_summary$mean_CPM_all < 1)
     n_low <- sum(krp_expression_summary$expression_class == "Low (bottom 25%)")
@@ -408,7 +441,10 @@ if (exists("v_full") && exists("targets")) {
     cat(sprintf("Genome-wide median CPM: %.2f\n", median(all_mean_cpm)))
     cat("\n")
 
+    # -------------------------------------------------------------------------
     # 7d. TP0-Specific KRP Expression (Where JAG1 is Active)
+    # -------------------------------------------------------------------------
+    cat("--- 7d. TP0-Specific Analysis ---\n\n")
 
     cat("RATIONALE:\n")
     cat("  - GmJAG1 is expressed at TP0 and drops to near-zero by TP1\n")
@@ -497,7 +533,9 @@ if (exists("v_full") && exists("targets")) {
 
 cat("\n")
 
+# =============================================================================
 # 8. CHECK DIFFERENTIAL EXPRESSION (FORMAL TEST)
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("DIFFERENTIAL EXPRESSION STATUS (FORMAL TEST)\n")
@@ -558,7 +596,9 @@ if (file.exists(de_file)) {
 
 cat("\n")
 
+# =============================================================================
 # 8. FINAL VERIFICATION SUMMARY
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("FINAL VERIFICATION SUMMARY\n")
@@ -606,7 +646,9 @@ if (nrow(new_genes) == 0 && guo_verified == guo_total) {
 
 cat("\n")
 
+# =============================================================================
 # 9. SAVE RESULTS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("SAVING RESULTS\n")
@@ -794,7 +836,9 @@ cat("Saved: KRP_Verification_Report.md\n")
 
 cat("\nAll results saved to:", output_dir, "\n")
 
+# =============================================================================
 # 10. SAVE CHECKPOINT
+# =============================================================================
 
 # Save all relevant objects
 save_objects <- c("comparison", "pfam_hits", "ortholog_hits", "guo_krp_genes",

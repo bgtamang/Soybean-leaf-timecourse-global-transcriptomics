@@ -1,14 +1,27 @@
+# Script 27: Cross-Validation Summary
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 27: CROSS-VALIDATION SUMMARY\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "ggplot2",
   "dplyr",
@@ -24,6 +37,13 @@ for (pkg in required_packages) {
   }
 }
 cat("  Packages loaded\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD ALL CHECKPOINTS\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/26_validation.RData")
 cat("Loaded validation results\n")
 
@@ -44,8 +64,11 @@ if (file.exists("03_results/checkpoints/24_functional_integrated.RData")) {
 jag1_targets <- target_table[target_table$Confidence_Tier != "Not_Target", ]
 cat("\nTotal JAG1 targets:", nrow(jag1_targets), "\n")
 
+# ===== CROSS-METHOD COMPARISON =====
 
 cat("\n========================================\n")
+cat("SECTION 2: CROSS-METHOD COMPARISON\n")
+cat("========================================\n\n")
 
 # Define gene sets from different methods
 gene_sets <- list()
@@ -71,8 +94,11 @@ for (set_name in names(gene_sets)) {
   cat("  ", set_name, ":", length(gene_sets[[set_name]]), "\n")
 }
 
+# ===== SET OVERLAPS =====
 
 cat("\n========================================\n")
+cat("SECTION 3: SET OVERLAPS\n")
+cat("========================================\n\n")
 
 # Calculate pairwise overlaps
 if (length(gene_sets) >= 2) {
@@ -107,8 +133,11 @@ if (length(gene_sets) >= 2) {
   cat("\nSaved: method_overlap_heatmap.png\n")
 }
 
+# ===== CONSENSUS TARGETS =====
 
 cat("\n========================================\n")
+cat("SECTION 4: CONSENSUS TARGETS\n")
+cat("========================================\n\n")
 
 # Find genes appearing in multiple gene sets
 all_genes <- unique(unlist(gene_sets))
@@ -144,8 +173,11 @@ consensus_threshold <- ceiling(n_methods / 2)
 consensus_genes <- membership_df$GeneID[membership_df$N_Methods >= consensus_threshold]
 cat("\nConsensus genes (in >=", consensus_threshold, "methods):", length(consensus_genes), "\n")
 
+# ===== FINAL VALIDATED LIST =====
 
 cat("\n========================================\n")
+cat("SECTION 5: FINAL VALIDATED LIST\n")
+cat("========================================\n\n")
 
 # Create final validated target list
 # Criteria: Gold tier OR (Silver tier AND high validation) OR consensus
@@ -205,8 +237,11 @@ write.csv(final_table, "03_results/tables/validation/final_validated_targets.csv
           row.names = FALSE)
 cat("\nSaved: final_validated_targets.csv\n")
 
+# ===== SUMMARY STATISTICS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SUMMARY STATISTICS\n")
+cat("========================================\n\n")
 
 summary_stats <- data.frame(
   Category = c(
@@ -236,8 +271,11 @@ print(summary_stats)
 write.csv(summary_stats, "03_results/tables/validation/validation_summary.csv",
           row.names = FALSE)
 
+# ===== VISUALIZATION =====
 
 cat("\n========================================\n")
+cat("SECTION 7: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Summary figure
 png("03_results/figures/27_cross_validation/validation_summary.png",
@@ -269,8 +307,11 @@ pie(tier_in_final,
 dev.off()
 cat("Saved: validation_summary.png\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 8: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 cross_validation <- list(
   gene_sets = gene_sets,
@@ -289,12 +330,18 @@ save(
 
 cat("Checkpoint saved: 27_cross_validation.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 27 COMPLETE: CROSS-VALIDATION SUMMARY\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Total candidates:", nrow(jag1_targets), "\n")
 cat("  - Consensus genes:", length(consensus_genes), "\n")
 cat("  - Final validated:", length(final_validated), "\n\n")
 
+cat("STAGE 8 COMPLETE!\n")
+cat("NEXT: Stage 9 - Final Outputs (Scripts 28-30)\n\n")

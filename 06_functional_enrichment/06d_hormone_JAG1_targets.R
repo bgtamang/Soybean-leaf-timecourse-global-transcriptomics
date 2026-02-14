@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+# ==============================================================================
+# Script 37b: Hormone Pathway Enrichment in JAG1 Targets
+# ==============================================================================
+# Purpose: Test whether JAG1 target genes are enriched for hormone pathway genes
 #
 # Question: Is JAG1 directly responsible for regulating hormone genes?
 #
@@ -16,16 +20,23 @@
 #
 # KEGG Reference:
 #   - Pathway: gmx04075 (Plant hormone signal transduction - Glycine max)
+# ==============================================================================
 
+cat("=======================================================================\n")
 cat("Script 37b: Hormone Pathway Enrichment in JAG1 Targets\n")
+cat("=======================================================================\n\n")
 
+# ------------------------------------------------------------------------------
 # 0. Set Working Directory to Project Root
-script_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+# ------------------------------------------------------------------------------
+script_dir <- tryCatch(dirname(rstudioapi::getSourceEditorContext()$path), error = function(e) file.path(getwd(), "02_scripts"))
 project_root <- dirname(script_dir)
 setwd(project_root)
 cat("Working directory:", getwd(), "\n\n")
 
+# ------------------------------------------------------------------------------
 # 1. Setup and Load Dependencies
+# ------------------------------------------------------------------------------
 cat("1. Loading packages and data from 37a...\n")
 
 suppressPackageStartupMessages({
@@ -50,7 +61,9 @@ hormone_in_background <- hormone_de_analysis$hormone_in_background
 background_genes <- hormone_de_analysis$background_genes
 de_hormone_genes <- hormone_de_analysis$de_hormone_genes
 
+# ------------------------------------------------------------------------------
 # 2. Load JAG1 Targets
+# ------------------------------------------------------------------------------
 cat("\n2. Loading JAG1 targets...\n")
 
 jag1_targets <- read_csv("03_results/tables/JAG1_targets/JAG1_targets_FINAL.csv",
@@ -65,7 +78,9 @@ for (tier in names(tier_counts)) {
   cat("     ", tier, ":", tier_counts[tier], "\n")
 }
 
+# ------------------------------------------------------------------------------
 # 3. Enrichment Analysis (Fisher's Exact Test)
+# ------------------------------------------------------------------------------
 cat("\n3. Performing enrichment analysis...\n")
 
 n_targets <- length(target_genes)
@@ -105,7 +120,9 @@ cat("   P-value:", format(fisher_result$p.value, digits = 4), "\n")
 cat("   Odds ratio:", round(fisher_result$estimate, 2), "\n")
 cat("   P-value (depletion test):", format(fisher_depletion$p.value, digits = 4), "\n")
 
+# ------------------------------------------------------------------------------
 # 4. Identify Specific Hormone Genes Among JAG1 Targets
+# ------------------------------------------------------------------------------
 cat("\n4. Identifying hormone genes among JAG1 targets...\n")
 
 if (length(targets_in_hormone) > 0) {
@@ -142,7 +159,9 @@ if (length(targets_in_hormone) > 0) {
   cat("   No hormone genes found among JAG1 targets\n")
 }
 
+# ------------------------------------------------------------------------------
 # 5. Compare with DE Analysis (from 37a)
+# ------------------------------------------------------------------------------
 cat("\n5. Comparing with DE hormone genes...\n")
 
 # Hormone genes by category
@@ -163,7 +182,9 @@ print(hormone_categories)
 write_csv(hormone_categories,
           "03_results/tables/hormone_analysis/37b_hormone_category_comparison.csv")
 
+# ------------------------------------------------------------------------------
 # 6. Create Results Summary Table
+# ------------------------------------------------------------------------------
 cat("\n6. Creating summary tables...\n")
 
 enrichment_summary <- data.frame(
@@ -184,7 +205,9 @@ enrichment_summary <- data.frame(
 write_csv(enrichment_summary,
           "03_results/tables/hormone_analysis/37b_JAG1_hormone_enrichment_results.csv")
 
+# ------------------------------------------------------------------------------
 # 7. Visualization
+# ------------------------------------------------------------------------------
 cat("\n7. Creating visualizations...\n")
 
 # Plot 1: Enrichment visualization
@@ -299,7 +322,9 @@ ggsave("03_results/figures/37b_hormone_JAG1/hormone_DE_vs_JAG1_comparison.pdf",
        p3, width = 8, height = 6)
 cat("   Saved: hormone_DE_vs_JAG1_comparison.png/pdf\n")
 
+# ------------------------------------------------------------------------------
 # 8. Save Checkpoint
+# ------------------------------------------------------------------------------
 cat("\n8. Saving checkpoint...\n")
 
 hormone_jag1_analysis <- list(
@@ -315,9 +340,13 @@ save(hormone_jag1_analysis, hormone_target_details,
      file = "03_results/checkpoints/37b_hormone_JAG1.RData")
 cat("   Saved: 37b_hormone_JAG1.RData\n")
 
+# ------------------------------------------------------------------------------
 # 9. Print Summary Report
+# ------------------------------------------------------------------------------
 cat("\n")
+cat("=======================================================================\n")
 cat("           SCRIPT 37b SUMMARY: JAG1 TARGET HORMONE ENRICHMENT\n")
+cat("=======================================================================\n\n")
 
 cat("QUESTION: Is JAG1 directly responsible for regulating hormone genes?\n\n")
 
@@ -371,3 +400,5 @@ cat("  Checkpoint:\n")
 cat("    - 03_results/checkpoints/37b_hormone_JAG1.RData\n")
 
 cat("\n=======================================================================\n")
+cat("Script 37b complete. Next: Run 37c for motif analysis of hormone genes.\n")
+cat("=======================================================================\n")

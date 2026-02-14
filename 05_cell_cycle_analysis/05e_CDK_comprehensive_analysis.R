@@ -1,3 +1,6 @@
+# =============================================================================
+# Script 34e: Comprehensive CDK (Cyclin-Dependent Kinase) Gene Family Analysis
+# =============================================================================
 #
 # PURPOSE:
 # Identify and analyze all soybean CDK genes to complete the cell cycle
@@ -41,14 +44,17 @@
 # - Binding evidence summary
 # - Comparison with KRP and Cyclin analyses
 #
+# =============================================================================
 
 # Set base directory
-base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 setwd(base_dir)
 
 library(tidyverse)
 
+# =============================================================================
 # 1. SETUP AND DATA LOADING
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMPREHENSIVE CDK (CYCLIN-DEPENDENT KINASE) GENE FAMILY ANALYSIS\n")
@@ -62,8 +68,11 @@ cat("  Cyclins ACTIVATE CDKs (gas pedal)\n")
 cat("  KRPs INHIBIT CDKs (brake)\n")
 cat("  CDKs phosphorylate substrates -> cell division\n\n")
 
+# -----------------------------------------------------------------------------
 # 1a. Load Phytozome Annotation File
+# -----------------------------------------------------------------------------
 
+cat("--- STEP 1: Loading Reference Data ---\n\n")
 
 annotation_file <- file.path(base_dir, "01_data/Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
 
@@ -85,7 +94,9 @@ annotation_loci <- annotation %>%
 cat("Annotation file loaded successfully\n")
 cat("  Total unique loci:", nrow(annotation_loci), "\n\n")
 
+# =============================================================================
 # 2. IDENTIFY CDK GENES - METHOD 1: ANNOTATION KEYWORD SEARCH
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 1: ANNOTATION KEYWORD SEARCH\n")
@@ -122,7 +133,9 @@ if (nrow(keyword_cdks) > 0) {
 }
 cat("\n")
 
+# =============================================================================
 # 3. IDENTIFY CDK GENES - METHOD 2: ARABIDOPSIS ORTHOLOG MAPPING
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("METHOD 2: ARABIDOPSIS ORTHOLOG MAPPING\n")
@@ -183,7 +196,9 @@ if (nrow(ortholog_cdks) > 0) {
 }
 cat("\n")
 
+# =============================================================================
 # 4. COMBINE AND DEDUPLICATE
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMBINING RESULTS\n")
@@ -209,7 +224,12 @@ cat("  Found by Keyword only:", sum(all_cdks$found_by_keyword & !all_cdks$found_
 cat("  Found by Ortholog only:", sum(!all_cdks$found_by_keyword & all_cdks$found_by_ortholog), "\n")
 cat("  Found by both:", sum(all_cdks$found_by_keyword & all_cdks$found_by_ortholog), "\n\n")
 
+# -----------------------------------------------------------------------------
 # 4a. Classify CDK types
+# -----------------------------------------------------------------------------
+
+cat("--- Classifying CDK Types ---\n\n")
+
 # -----------------------------------------------------------------------------
 # CLASSIFICATION BY ARABIDOPSIS GENE ID (most accurate method)
 # Core cell cycle CDKs identified by their Arabidopsis ortholog gene IDs:
@@ -236,6 +256,7 @@ all_cdks <- all_cdks %>%
       `Best-hit-arabi-name` == "AT5G39420" ~ "CDK8",    # Mediator kinase
       `Best-hit-arabi-name` == "AT5G63610" ~ "CDK8",    # Also CDK8
       # THEN: Check name/defline patterns for other CDK types
+      # Note: Use \\. to match literal dot, not wildcard
       grepl("CDKC", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKC",
       grepl("CDKD", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKD",
       grepl("CDKE", `Best-hit-arabi-name`, ignore.case = TRUE) ~ "CDKE",
@@ -280,7 +301,9 @@ for (i in 1:nrow(cdk_type_counts)) {
 }
 cat("\n")
 
+# =============================================================================
 # 5. CHECK EXPRESSION IN OUR DATA
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("EXPRESSION ANALYSIS\n")
@@ -354,7 +377,9 @@ if (file.exists(checkpoint_file)) {
   all_cdks$mean_CPM <- NA
 }
 
+# =============================================================================
 # 6. CHECK JAG1 TARGET STATUS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("JAG1 TARGET STATUS\n")
@@ -418,7 +443,9 @@ if (file.exists(jag1_targets_file)) {
   all_cdks$is_jag1_target <- NA
 }
 
+# =============================================================================
 # 7. CHECK BINDING EVIDENCE
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("BINDING EVIDENCE\n")
@@ -469,7 +496,9 @@ if (file.exists(binding_file)) {
   cat("WARNING: Binding integration file not found.\n")
 }
 
+# =============================================================================
 # 8. COMPREHENSIVE COMPARISON: CDKs vs Cyclins vs KRPs
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("COMPREHENSIVE COMPARISON: CDKs vs CYCLINS vs KRPs\n")
@@ -545,7 +574,9 @@ for (i in 1:nrow(comparison_table)) {
 }
 cat("\n")
 
+# =============================================================================
 # 9. KEY FINDINGS AND BIOLOGICAL INTERPRETATION
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("KEY FINDINGS AND BIOLOGICAL INTERPRETATION\n")
@@ -592,7 +623,9 @@ if (n_cdk_jag1 == 0 && !is.na(n_cyclin_jag1) && n_cyclin_jag1 > 0 && !is.na(n_kr
 }
 cat("\n")
 
+# =============================================================================
 # 10. SAVE RESULTS
+# =============================================================================
 
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n")
 cat("SAVING RESULTS\n")

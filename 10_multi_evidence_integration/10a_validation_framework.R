@@ -1,18 +1,31 @@
+# Script 26: Target Validation Framework
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 26: TARGET VALIDATION FRAMEWORK\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/validation", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/26_validation", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "ggplot2",
   "dplyr",
@@ -23,6 +36,13 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load integrated functional data
 load("03_results/checkpoints/24_functional_integrated.RData")
 cat("Loaded functional integration data\n")
@@ -50,8 +70,11 @@ if (file.exists("03_results/checkpoints/15_JAG1_network.RData")) {
 jag1_targets <- target_table[target_table$Confidence_Tier != "Not_Target", ]
 cat("\nJAG1 targets:", nrow(jag1_targets), "\n")
 
+# ===== LITERATURE REFERENCE GENES =====
 
 cat("\n========================================\n")
+cat("SECTION 2: LITERATURE REFERENCE\n")
+cat("========================================\n\n")
 
 # Known JAG1/JAGGED-related genes from literature
 # Based on Arabidopsis JAGGED and soybean studies
@@ -97,8 +120,11 @@ print(literature_genes)
 write.csv(literature_genes, "03_results/tables/validation/literature_reference.csv",
           row.names = FALSE)
 
+# ===== VALIDATION SCORING =====
 
 cat("\n========================================\n")
+cat("SECTION 3: VALIDATION SCORING\n")
+cat("========================================\n\n")
 
 # Create validation score for each target
 validation_df <- data.frame(
@@ -166,6 +192,13 @@ cat("Validation score summary:\n")
 cat("  Score range:", round(min(validation_df$Validation_Score), 2), "-",
     round(max(validation_df$Validation_Score), 2), "\n")
 cat("  Mean score:", round(mean(validation_df$Validation_Score), 2), "\n\n")
+
+# ===== VALIDATION CATEGORIES =====
+
+cat("========================================\n")
+cat("SECTION 4: VALIDATION CATEGORIES\n")
+cat("========================================\n\n")
+
 # Categorize by validation confidence
 score_q75 <- quantile(validation_df$Validation_Score, 0.75)
 score_q50 <- quantile(validation_df$Validation_Score, 0.50)
@@ -181,8 +214,11 @@ tier_validation <- table(validation_df$Confidence_Tier, validation_df$Validation
 cat("\nTier vs Validation Level:\n")
 print(tier_validation)
 
+# ===== TOP VALIDATED TARGETS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: TOP VALIDATED TARGETS\n")
+cat("========================================\n\n")
 
 # Get top 50 validated targets
 top_validated <- head(validation_df, 50)
@@ -196,8 +232,11 @@ write.csv(top_validated, "03_results/tables/validation/top50_validated.csv",
           row.names = FALSE)
 cat("\nSaved: top50_validated.csv\n")
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: Validation score distribution by tier
 png("03_results/figures/26_validation/validation_by_tier.png",
@@ -274,8 +313,11 @@ if ("Category" %in% colnames(high_conf)) {
 dev.off()
 cat("Saved: high_confidence_summary.png\n")
 
+# ===== SAVE RESULTS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SAVE RESULTS\n")
+cat("========================================\n\n")
 
 # Save full validation table
 write.csv(validation_df, "03_results/tables/validation/all_targets_validated.csv",
@@ -287,8 +329,11 @@ write.csv(high_conf, "03_results/tables/validation/high_confidence_targets.csv",
           row.names = FALSE)
 cat("Saved: high_confidence_targets.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 8: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 validation_results <- list(
   validation_df = validation_df,
@@ -305,9 +350,13 @@ save(
 
 cat("Checkpoint saved: 26_validation.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 26 COMPLETE: TARGET VALIDATION FRAMEWORK\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Validated", nrow(validation_df), "JAG1 targets\n")
@@ -316,3 +365,4 @@ cat("  - Score range:", round(min(validation_df$Validation_Score), 2), "-",
     round(max(validation_df$Validation_Score), 2), "\n")
 cat("  - Top validated gene:", validation_df$GeneID[1], "\n\n")
 
+cat("NEXT STEP: Run Script 27 for cross-validation summary\n\n")

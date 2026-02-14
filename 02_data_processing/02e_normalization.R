@@ -1,17 +1,30 @@
+# Script 05: Normalization
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 05: NORMALIZATION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/05_normalization", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",           # For DGEList and normalization
   "limma",           # For voom transformation
@@ -29,6 +42,13 @@ if (length(missing) > 0) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/04_batch_corrected.RData")
 cat("Loaded checkpoint from script 04\n")
 cat("  Objects loaded:\n")
@@ -40,6 +60,13 @@ cat("    - targets: Sample metadata\n\n")
 cat("Data dimensions:\n")
 cat("  All samples: ", nrow(dge_corrected), " genes x ", ncol(dge_corrected), " samples\n", sep = "")
 cat("  TP1-4 subset: ", nrow(dge_tp1_4), " genes x ", ncol(dge_tp1_4), " samples\n\n", sep = "")
+
+# ===== SECTION 2: VERIFY NORMALIZATION =====
+
+cat("========================================\n")
+cat("SECTION 2: VERIFY NORMALIZATION\n")
+cat("========================================\n\n")
+
 # Check TMM normalization factors
 cat("TMM Normalization Factors (batch-corrected data):\n")
 norm_factors <- dge_corrected$samples$norm.factors
@@ -54,6 +81,13 @@ cat("  Mean:", format(round(mean(lib_sizes)), big.mark = ","), "\n")
 cat("  Median:", format(round(median(lib_sizes)), big.mark = ","), "\n")
 cat("  Range:", format(min(lib_sizes), big.mark = ","), "to",
     format(max(lib_sizes), big.mark = ","), "\n\n")
+
+# ===== SECTION 3: CREATE DESIGN MATRICES =====
+
+cat("========================================\n")
+cat("SECTION 3: CREATE DESIGN MATRICES\n")
+cat("========================================\n\n")
+
 # Design matrix for full analysis (all 60 samples)
 # Using Group (Line_Timepoint) for maximum flexibility
 cat("Creating design matrix for full dataset...\n")
@@ -76,6 +110,13 @@ design_tp1_4 <- model.matrix(~0 + Group, data = targets_tp1_4)
 colnames(design_tp1_4) <- gsub("Group", "", colnames(design_tp1_4))
 
 cat("  Design matrix dimensions:", nrow(design_tp1_4), "x", ncol(design_tp1_4), "\n\n")
+
+# ===== SECTION 4: VOOM TRANSFORMATION =====
+
+cat("========================================\n")
+cat("SECTION 4: VOOM TRANSFORMATION\n")
+cat("========================================\n\n")
+
 cat("Performing voom transformation (full dataset)...\n")
 
 # Voom with quality weights for full dataset
@@ -102,6 +143,13 @@ v_tp1_4 <- voom(dge_tp1_4, design_tp1_4, plot = TRUE)
 title("Voom Mean-Variance Trend (TP1-4 Only, Batch-Free)")
 dev.off()
 cat("  Saved: 03_results/figures/05_normalization/voom_mean_variance_tp1_4.png\n\n")
+
+# ===== SECTION 5: EXPRESSION DISTRIBUTIONS =====
+
+cat("========================================\n")
+cat("SECTION 5: EXPRESSION DISTRIBUTIONS\n")
+cat("========================================\n\n")
+
 # Colors
 batch_colors <- c("2021" = "#E41A1C", "2022" = "#377EB8")
 leaf_colors <- c("Broad" = "darkgreen", "Narrow" = "purple")
@@ -170,8 +218,11 @@ ggsave("03_results/figures/05_normalization/expression_by_group.png", p1,
        width = 12, height = 6, dpi = 300)
 cat("  Saved: 03_results/figures/05_normalization/expression_by_group.png\n")
 
+# ===== SECTION 6: JAG1 EXPRESSION =====
 
 cat("\n========================================\n")
+cat("SECTION 6: JAG1 EXPRESSION\n")
+cat("========================================\n\n")
 
 # Check JAG1 and JAG2 expression
 jag1_id <- PARAMS$JAG1
@@ -257,8 +308,11 @@ if (!all(is.na(jag_data$JAG1)) && !all(is.na(jag_data$JAG2))) {
   cat("  Saved: 03_results/figures/05_normalization/JAG1_vs_JAG2.png\n")
 }
 
+# ===== SECTION 7: SAMPLE CLUSTERING (POST-NORMALIZATION) =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SAMPLE CLUSTERING\n")
+cat("========================================\n\n")
 
 cat("Creating MDS plot (voom-normalized)...\n")
 
@@ -288,8 +342,11 @@ legend("topright", legend = names(tp_colors), col = tp_colors, pch = 19, cex = 0
 dev.off()
 cat("  Saved: 03_results/figures/05_normalization/MDS_voom.png\n")
 
+# ===== SECTION 8: NORMALIZATION SUMMARY =====
 
 cat("\n========================================\n")
+cat("SECTION 8: NORMALIZATION SUMMARY\n")
+cat("========================================\n\n")
 
 # Create summary table
 norm_summary <- data.frame(
@@ -326,8 +383,11 @@ cat("Saved: 03_results/tables/normalization_summary.csv\n\n")
 
 print(norm_summary)
 
+# ===== SECTION 9: SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 9: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Save all objects for downstream analysis
 save(
@@ -366,14 +426,20 @@ cat("    - Expression: logCPM_corrected\n")
 cat("    - Metadata: targets, targets_tp1_4\n")
 cat("    - Parameters: PARAMS, QC_PARAMS\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 05: NORMALIZATION - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -388,3 +454,5 @@ cat("    - Differential expression (limma)\n")
 cat("    - Mixed-effects modeling\n")
 cat("    - Co-expression analysis (WGCNA)\n")
 cat("\n")
+cat("  Next: Run 06_sample_validation.R\n")
+cat("================================================================\n")

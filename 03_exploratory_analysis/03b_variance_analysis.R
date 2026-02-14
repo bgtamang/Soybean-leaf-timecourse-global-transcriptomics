@@ -1,17 +1,30 @@
+# Script 08: Variance Analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 08: VARIANCE ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/08_variance", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -29,6 +42,13 @@ if (length(missing) > 0) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/06_validated.RData")
 cat("Loaded checkpoint from script 06\n\n")
 
@@ -38,6 +58,7 @@ targets <- targets_primary
 
 cat("Expression matrix:", nrow(expr_mat), "genes x", ncol(expr_mat), "samples\n\n")
 
+# ===== DEFINE COLORS =====
 
 factor_colors <- c(
   "Leaf_type" = "#2E8B57",
@@ -46,6 +67,13 @@ factor_colors <- c(
   "Batch" = "#377EB8",
   "Residual" = "#999999"
 )
+
+# ===== SECTION 2: VARIANCE PARTITIONING (Per-Gene) =====
+
+cat("========================================\n")
+cat("SECTION 2: PER-GENE VARIANCE PARTITIONING\n")
+cat("========================================\n\n")
+
 cat("Calculating variance explained by each factor for all genes...\n")
 cat("  This may take a minute...\n\n")
 
@@ -102,6 +130,13 @@ cat("  Timepoint:", round(mean(variance_df$Timepoint) * 100, 2), "%\n")
 cat("  Batch:", round(mean(variance_df$Batch) * 100, 2), "%\n")
 cat("  Full model:", round(mean(variance_df$Full_model) * 100, 2), "%\n")
 cat("  Residual:", round(mean(variance_df$Residual) * 100, 2), "%\n\n")
+
+# ===== SECTION 3: VISUALIZE VARIANCE COMPONENTS =====
+
+cat("========================================\n")
+cat("SECTION 3: VARIANCE VISUALIZATIONS\n")
+cat("========================================\n\n")
+
 # --- Plot 1: Bar plot of mean variance explained ---
 cat("Creating variance bar plot...\n")
 
@@ -179,8 +214,11 @@ pie(pie_data,
 dev.off()
 cat("  Saved: 03_results/figures/08_variance/variance_pie.png\n")
 
+# ===== SECTION 4: PERMANOVA =====
 
 cat("\n========================================\n")
+cat("SECTION 4: PERMANOVA ANALYSIS\n")
+cat("========================================\n\n")
 
 cat("Running PERMANOVA to test significance of factors...\n")
 
@@ -237,8 +275,11 @@ permanova_summary <- data.frame(
 write.csv(permanova_summary, "03_results/tables/PERMANOVA_results.csv", row.names = FALSE)
 cat("\nSaved: 03_results/tables/PERMANOVA_results.csv\n")
 
+# ===== SECTION 5: LEAF-TYPE VALIDATION =====
 
 cat("\n========================================\n")
+cat("SECTION 5: LEAF-TYPE GROUPING VALIDATION\n")
+cat("========================================\n\n")
 
 cat("Evaluating whether grouping by Leaf_type is appropriate:\n\n")
 
@@ -292,8 +333,11 @@ ggsave("03_results/figures/08_variance/leaf_vs_line_variance.png", p4,
        width = 8, height = 8, dpi = 300)
 cat("  Saved: 03_results/figures/08_variance/leaf_vs_line_variance.png\n")
 
+# ===== SECTION 6: SAVE RESULTS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SAVE RESULTS\n")
+cat("========================================\n\n")
 
 # Save variance components
 write.csv(variance_df, "03_results/tables/variance_components.csv", row.names = FALSE)
@@ -325,14 +369,20 @@ cat("Saved: 03_results/tables/variance_summary.csv\n\n")
 
 print(variance_summary)
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 08: VARIANCE ANALYSIS - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Key Findings:\n")
@@ -341,3 +391,5 @@ cat("    - Line variance:", round(mean(variance_df$Line) * 100, 1), "%\n")
 cat("    - Leaf_type variance:", round(mean(variance_df$Leaf_type) * 100, 1), "%\n")
 cat("    - Batch variance:", round(mean(variance_df$Batch) * 100, 1), "%\n")
 cat("\n")
+cat("  Next: Run 09_expression_overview.R\n")
+cat("================================================================\n")

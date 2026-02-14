@@ -1,17 +1,30 @@
+# Script 03: Quality Control
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 03: QUALITY CONTROL\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/03_QC", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",          # For DGEList and normalization
   "limma",          # For MDS plots
@@ -33,11 +46,13 @@ if (length(missing) > 0) {
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
 
+# ===== LOAD PREVIOUS CHECKPOINT =====
 
 cat("Loading previous checkpoint...\n")
 load("03_results/checkpoints/02_sample_metadata.RData")
 cat("  Loaded: raw_counts (", nrow(raw_counts), " x ", ncol(raw_counts), "), targets\n\n", sep = "")
 
+# ===== QC PARAMETERS =====
 
 QC_PARAMS <- list(
   min_correlation = 0.9,        # Minimum expected replicate correlation
@@ -49,6 +64,13 @@ QC_PARAMS <- list(
 cat("QC Parameters:\n")
 cat("  Minimum replicate correlation:", QC_PARAMS$min_correlation, "\n")
 cat("  Outlier threshold (SD):", QC_PARAMS$outlier_threshold, "\n\n")
+
+# ===== SECTION 1: CREATE DGEList =====
+
+cat("========================================\n")
+cat("SECTION 1: CREATE DGEList OBJECT\n")
+cat("========================================\n\n")
+
 # Create DGEList object
 dge <- DGEList(counts = raw_counts, samples = targets)
 
@@ -122,6 +144,13 @@ if (length(mapping_col) > 0) {
   cat("  Checked columns:", paste(mapping_cols, collapse = ", "), "\n")
   cat("  Available columns:", paste(colnames(targets), collapse = ", "), "\n\n")
 }
+
+# ===== SECTION 2: GENE FILTERING =====
+
+cat("========================================\n")
+cat("SECTION 2: GENE FILTERING\n")
+cat("========================================\n\n")
+
 # Calculate CPM
 cpm_matrix <- cpm(dge)
 
@@ -148,6 +177,7 @@ if (PARAMS$JAG1 %in% rownames(dge)) {
 # Apply filter
 dge_filtered <- dge[keep, , keep.lib.sizes = FALSE]
 
+# ===== CRITICAL: Calculate % reads retained after filtering =====
 # This is an important QC metric - most reads should be retained even if many genes are removed
 reads_before <- dge$samples$lib.size
 reads_after <- dge_filtered$samples$lib.size
@@ -159,6 +189,7 @@ cat("  Range:", round(min(pct_reads_retained), 2), "-",
     round(max(pct_reads_retained), 2), "%\n")
 cat("  Interpretation: Low-expression genes removed had minimal counts\n\n")
 
+# ===== Create comprehensive filtering summary for manuscript =====
 filtering_summary <- data.frame(
   Metric = c(
     "Initial genes (before filtering)",
@@ -191,8 +222,16 @@ cat("Saved: 03_results/tables/filtering_summary.csv\n\n")
 
 # Print summary for console
 cat("FILTERING SUMMARY FOR MANUSCRIPT:\n")
+cat("----------------------------------\n")
 print(filtering_summary)
 cat("\n")
+
+# ===== SECTION 3: NORMALIZATION (for QC purposes) =====
+
+cat("========================================\n")
+cat("SECTION 3: NORMALIZATION\n")
+cat("========================================\n\n")
+
 # Calculate normalization factors
 dge_filtered <- calcNormFactors(dge_filtered, method = "TMM")
 
@@ -204,6 +243,13 @@ cat("  SD:", round(sd(dge_filtered$samples$norm.factors), 3), "\n\n")
 
 # Calculate log CPM for downstream QC
 logCPM <- cpm(dge_filtered, log = TRUE, prior.count = 2)
+
+# ===== SECTION 4: SAMPLE CORRELATIONS =====
+
+cat("========================================\n")
+cat("SECTION 4: SAMPLE CORRELATIONS\n")
+cat("========================================\n\n")
+
 # Calculate sample correlation matrix
 sample_cor <- cor(logCPM, method = "pearson")
 
@@ -211,6 +257,13 @@ cat("Sample correlation statistics:\n")
 cat("  Mean correlation:", round(mean(sample_cor[lower.tri(sample_cor)]), 4), "\n")
 cat("  Min correlation:", round(min(sample_cor[lower.tri(sample_cor)]), 4), "\n")
 cat("  Max correlation:", round(max(sample_cor[lower.tri(sample_cor)]), 4), "\n\n")
+
+# ===== SECTION 5: REPLICATE CONSISTENCY =====
+
+cat("========================================\n")
+cat("SECTION 5: REPLICATE CONSISTENCY\n")
+cat("========================================\n\n")
+
 # Calculate within-group correlations
 groups <- unique(targets$Group)
 replicate_cors <- data.frame(
@@ -254,6 +307,13 @@ if (nrow(low_cor_groups) > 0) {
 # Save replicate correlations
 write.csv(replicate_cors, "03_results/tables/replicate_correlations.csv", row.names = FALSE)
 cat("\n  Saved: 03_results/tables/replicate_correlations.csv\n\n")
+
+# ===== SECTION 6: EVALUATE PROBLEMATIC SAMPLE =====
+
+cat("========================================\n")
+cat("SECTION 6: PROBLEMATIC SAMPLE ANALYSIS\n")
+cat("========================================\n\n")
+
 # Focus on sample 745_T2_R2 identified in Phase 1
 problem_sample <- "745_T2_R2"
 
@@ -310,8 +370,11 @@ if (problem_sample %in% colnames(logCPM)) {
   cat("Sample", problem_sample, "not found in data\n")
 }
 
+# ===== SECTION 7: OUTLIER DETECTION =====
 
 cat("\n========================================\n")
+cat("SECTION 7: OUTLIER DETECTION\n")
+cat("========================================\n\n")
 
 # Method 1: Based on correlation with other samples
 mean_cors <- colMeans(sample_cor)
@@ -355,8 +418,11 @@ for (s in all_outliers) {
   }
 }
 
+# ===== SECTION 8: CREATE QC SUMMARY TABLE =====
 
 cat("\n========================================\n")
+cat("SECTION 8: QC SUMMARY TABLE\n")
+cat("========================================\n\n")
 
 # Create comprehensive QC metrics table
 qc_metrics <- data.frame(
@@ -382,8 +448,11 @@ cat("Saved: 03_results/tables/QC_metrics.csv\n")
 cat("\nQC Flag Summary:\n")
 print(table(qc_metrics$QC_flag))
 
+# ===== SECTION 9: VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 9: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Set up colors
 batch_colors <- c("2021" = "#E41A1C", "2022" = "#377EB8")
@@ -541,11 +610,15 @@ title("Mean-Variance Relationship (voom)")
 dev.off()
 cat("  Saved: 03_results/figures/03_QC/mean_variance.png\n")
 
+# ===== SECTION 10: QC DECISIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 10: QC DECISIONS & RECOMMENDATIONS\n")
+cat("========================================\n\n")
 
 # Summary of QC findings
 cat("QC SUMMARY:\n")
+cat("-----------\n\n")
 
 cat("1. Library Sizes:\n")
 cat("   Mean:", format(round(mean(dge_filtered$samples$lib.size)), big.mark = ","), "\n")
@@ -577,8 +650,11 @@ if (length(problem_samples) > 0) {
   cat("   All samples pass QC\n")
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 11: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Objects to save
 save(
@@ -598,14 +674,20 @@ cat("Saved checkpoint: 03_results/checkpoints/03_QC_complete.RData\n")
 cat("  Contains: raw_counts, dge_filtered, logCPM, targets, sample_cor,\n")
 cat("            replicate_cors, qc_metrics, PARAMS, QC_PARAMS\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 03: QUALITY CONTROL - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  QC Summary:\n")
@@ -614,3 +696,5 @@ cat("    - Mean replicate correlation:", round(mean(replicate_cors$Mean_Correlat
 cat("    - Samples flagged:", sum(targets$QC_flag != "OK"), "\n")
 cat("    - Batch effect: Detected (TP0 vs TP1-4)\n")
 cat("\n")
+cat("  Next: Run 04_batch_correction.R\n")
+cat("================================================================\n")

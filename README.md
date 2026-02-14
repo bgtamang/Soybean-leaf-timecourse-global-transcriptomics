@@ -96,8 +96,9 @@ Scripts are organized in execution order:
 09_DTU_analysis/           Differential transcript usage (DRIMSeq/stageR)
 10_multi_evidence_integration/ Multi-layer evidence filtering, phenotype correlation,
                            cross-validation
-11_72gene_analysis/        Functional categorization and visualization of 72
-                           high-confidence targets
+11_validated_genes_analysis/ Functional categorization, visualization, and heatmap
+                           of 79 high-confidence targets (Gold: 76, Silver: 69,
+                           Bronze: 1,422; total: 1,567 tiered targets)
 shiny_app/                 Interactive Shiny dashboard for exploring results
 ```
 
@@ -111,7 +112,7 @@ Folders are numbered in the order they should be run. Within each folder, script
 4. **05-09** can be run independently after step 4
 5. **06f** (functional integration) optionally incorporates WGCNA results from step 7
 6. **10** integrates results from steps 4, 6f, 7, and 8
-7. **11** uses the 72 high-confidence targets from step 10
+7. **11** uses the 79 high-confidence targets from step 10
 
 ## Experimental Design
 

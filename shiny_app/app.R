@@ -1,4 +1,4 @@
-# GmJAG1 RNA-Seq Shiny Dashboard
+# GmJAG1 RNA-Seq Shiny Dashboard (Phase3)
 # Launch script
 
 # Source global, ui, and server

@@ -61,7 +61,7 @@ expression_ui <- function(id) {
                         "Custom (enter below)" = "custom",
                         "Housekeeping - Top 20 (most stable)" = "hk_top20",
                         "Housekeeping - Top 50" = "hk_top50",
-                        "Housekeeping - All (447 genes)" = "hk_all",
+                        "Housekeeping - All (448 genes)" = "hk_all",
                         "JAG1 Targets - Gold" = "jag1_gold",
                         "JAG1 Targets - Silver" = "jag1_silver",
                         "JAG1 Targets - Bronze" = "jag1_bronze",
@@ -286,7 +286,7 @@ expression_server <- function(id, selected_gene) {
         },
         "temp_tp0" = {
           if (!is.null(jag1_targets) && "Pattern" %in% names(jag1_targets)) {
-            head(jag1_targets$GeneID[jag1_targets$Pattern == "TP0-specific"], max_genes)
+            head(jag1_targets$GeneID[jag1_targets$Pattern == "TP0_Specific"], max_genes)
           } else character(0)
         },
         "temp_late" = {

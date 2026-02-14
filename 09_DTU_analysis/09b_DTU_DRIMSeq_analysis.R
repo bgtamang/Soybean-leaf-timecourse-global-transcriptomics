@@ -1,19 +1,32 @@
+# Script 41: DTU Analysis with DRIMSeq + stageR
 # REVISED: TP0-focused analysis of JAG1 targets
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 41: DTU ANALYSIS (DRIMSeq + stageR)\n")
 cat("  TP0-FOCUSED ANALYSIS OF JAG1 TARGETS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/41_DTU_analysis", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "DRIMSeq",          # DTU analysis
   "stageR",           # Stage-wise testing
@@ -45,6 +58,13 @@ if (.Platform$OS.type == "windows") {
 } else {
   BPPARAM <- MulticoreParam(workers = 1)
 }
+
+# ===== SECTION 1: LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/40_dtu_prepared.RData")
 cat("Loaded checkpoint from script 40\n")
 
@@ -93,6 +113,13 @@ if (file.exists(jag1_targets_file)) {
 }
 
 cat("\n")
+
+# ===== SECTION 2: SUBSET TO TP0 SAMPLES =====
+
+cat("========================================\n")
+cat("SECTION 2: SUBSET TO TP0 SAMPLES\n")
+cat("========================================\n\n")
+
 # Filter to TP0 samples only
 tp0_samples <- targets$Sample[targets$Timepoint == "TP0"]
 cat("TP0 samples:", length(tp0_samples), "\n")
@@ -108,6 +135,13 @@ print(table(tp0_metadata$Line, tp0_metadata$Leaf_type))
 # Subset counts to TP0
 tx_counts_tp0 <- tx_counts[, tp0_samples]
 cat("\nTP0 count matrix:", nrow(tx_counts_tp0), "transcripts x", ncol(tx_counts_tp0), "samples\n\n")
+
+# ===== SECTION 3: FILTER FOR TP0 EXPRESSION =====
+
+cat("========================================\n")
+cat("SECTION 3: FILTER FOR TP0 EXPRESSION\n")
+cat("========================================\n\n")
+
 # TP0-specific filtering:
 # - Transcript must have >= 5 counts in >= 2 samples at TP0
 # - Gene must have >= 2 expressed transcripts
@@ -119,6 +153,7 @@ cat("TP0-specific filter parameters:\n")
 cat("  Minimum counts:", min_counts_tp0, "\n")
 cat("  Minimum samples:", min_samples_tp0, "(out of", ncol(tx_counts_tp0), ")\n\n")
 
+# Step 1: Filter transcripts expressed at TP0
 expressed_tp0 <- rowSums(tx_counts_tp0 >= min_counts_tp0) >= min_samples_tp0
 cat("Transcripts expressed at TP0:", sum(expressed_tp0), "/", nrow(tx_counts_tp0), "\n")
 
@@ -127,6 +162,7 @@ tx_counts_tp0_filt <- tx_counts_tp0[expressed_tp0, ]
 # Update tx2gene for filtered transcripts
 tx2gene_tp0 <- tx2gene[tx2gene$TXNAME %in% rownames(tx_counts_tp0_filt), ]
 
+# Step 2: Keep genes with >= 2 transcripts
 tx_per_gene <- tx2gene_tp0 %>%
   group_by(GENEID) %>%
   summarise(n_tx = n(), .groups = "drop")
@@ -146,6 +182,13 @@ cat("  Genes:", length(unique(tx2gene_tp0_filt$GENEID)), "\n")
 # Check JAG1 targets overlap
 jag1_in_dtu <- sum(unique(tx2gene_tp0_filt$GENEID) %in% jag1_targets_df$GeneID)
 cat("  JAG1 targets in dataset:", jag1_in_dtu, "\n\n")
+
+# ===== SECTION 4: PREPARE DRIMSeq DATA =====
+
+cat("========================================\n")
+cat("SECTION 4: PREPARE DRIMSeq DATA\n")
+cat("========================================\n\n")
+
 # Prepare counts data frame for DRIMSeq
 counts_df <- data.frame(
   gene_id = tx2gene_tp0_filt$GENEID[match(rownames(tx_counts_tp0_filt), tx2gene_tp0_filt$TXNAME)],
@@ -180,6 +223,13 @@ cat("Creating dmDSdata object...\n")
 d <- dmDSdata(counts = counts_df, samples = samples_df)
 cat("  Features:", nrow(counts(d)), "\n")
 cat("  Genes:", length(unique(counts(d)$gene_id)), "\n\n")
+
+# ===== SECTION 5: DRIMSeq FILTERING =====
+
+cat("========================================\n")
+cat("SECTION 5: DRIMSeq FILTERING\n")
+cat("========================================\n\n")
+
 # Relaxed filtering for TP0 (12 samples only)
 cat("DRIMSeq filter parameters (relaxed for 12 samples):\n")
 cat("  min_samps_gene_expr: 3\n")
@@ -206,6 +256,13 @@ cat("  Genes:", length(unique(counts(d_filt)$gene_id)), "\n")
 genes_after_filter <- unique(counts(d_filt)$gene_id)
 jag1_after_filter <- sum(genes_after_filter %in% jag1_targets_df$GeneID)
 cat("  JAG1 targets retained:", jag1_after_filter, "\n\n")
+
+# ===== SECTION 6: FIT DIRICHLET-MULTINOMIAL MODEL =====
+
+cat("========================================\n")
+cat("SECTION 6: FIT DIRICHLET-MULTINOMIAL MODEL\n")
+cat("========================================\n\n")
+
 # Design matrix
 # NOTE: Line and Condition are perfectly confounded (each line is either Broad OR Narrow)
 # So we cannot include both in the model. Use ~ condition only.
@@ -233,6 +290,13 @@ cat("  Model fitted\n")
 
 end_time <- Sys.time()
 cat("  Time elapsed:", round(difftime(end_time, start_time, units = "mins"), 1), "minutes\n\n")
+
+# ===== SECTION 7: TEST FOR DTU =====
+
+cat("========================================\n")
+cat("SECTION 7: TEST FOR DTU\n")
+cat("========================================\n\n")
+
 # Test for DTU
 cat("Testing for differential transcript usage (Narrow vs Broad at TP0)...\n")
 d_filt <- dmTest(d_filt, coef = "conditionNarrow", BPPARAM = BPPARAM)
@@ -254,6 +318,13 @@ sig_bh_10 <- sum(res_gene$padj < 0.10, na.rm = TRUE)
 cat("  Significant (p < 0.05, unadjusted):", sig_nominal, "\n")
 cat("  Significant (padj < 0.05, BH):", sig_bh, "\n")
 cat("  Significant (padj < 0.10, BH):", sig_bh_10, "\n\n")
+
+# ===== SECTION 8: STAGE-WISE TESTING =====
+
+cat("========================================\n")
+cat("SECTION 8: STAGE-WISE TESTING (stageR)\n")
+cat("========================================\n\n")
+
 cat("Performing stage-wise testing...\n")
 
 # Prepare p-values
@@ -284,7 +355,7 @@ stageRObj <- stageRTx(
 )
 
 # Stage-wise adjustment
-stageRObj <- stageWiseAdjustment(stageRObj, method = "dtu", alpha = 0.05)
+stageRObj <- stageWiseAdjustment(stageRObj, method = "dtu", alpha = 0.05, allowNA = TRUE)
 
 # Get results
 dtu_genes <- getSignificantGenes(stageRObj)
@@ -298,7 +369,7 @@ cat("  Transcripts with significant DTU:", length(dtu_transcripts), "\n")
 stageRObj_10 <- stageWiseAdjustment(
   stageRTx(pScreen = pScreen, pConfirmation = pConfirmation,
            pScreenAdjusted = FALSE, tx2gene = tx2gene_stager),
-  method = "dtu", alpha = 0.10
+  method = "dtu", alpha = 0.10, allowNA = TRUE
 )
 dtu_genes_10 <- getSignificantGenes(stageRObj_10)
 
@@ -306,6 +377,13 @@ cat("  Genes with significant DTU (OFDR = 0.10):", length(dtu_genes_10), "\n\n")
 
 # Get adjusted p-values
 padj_gene <- getAdjustedPValues(stageRObj, order = FALSE, onlySignificantGenes = FALSE)
+
+# ===== SECTION 9: ANNOTATE RESULTS WITH JAG1 TARGET INFO =====
+
+cat("========================================\n")
+cat("SECTION 9: ANNOTATE WITH JAG1 TARGET INFO\n")
+cat("========================================\n\n")
+
 # Add stageR p-values and JAG1 info
 res_gene_final <- res_gene
 res_gene_final$padj_stageR <- padj_gene[match(res_gene_final$gene_id, rownames(padj_gene)), "gene"]
@@ -336,6 +414,13 @@ cat("\n")
 
 # Order by significance
 res_gene_final <- res_gene_final[order(res_gene_final$pvalue), ]
+
+# ===== SECTION 10: JAG1 TARGET ENRICHMENT TEST =====
+
+cat("========================================\n")
+cat("SECTION 10: JAG1 TARGET ENRICHMENT IN DTU\n")
+cat("========================================\n\n")
+
 # Test if JAG1 targets are enriched among DTU genes
 # Using nominal p < 0.05 for more power (small sample size)
 
@@ -398,6 +483,13 @@ for (tier in c("Gold", "Silver", "Bronze")) {
 enrichment_df <- do.call(rbind, enrichment_results)
 
 cat("\n")
+
+# ===== SECTION 11: TOP DTU GENES =====
+
+cat("========================================\n")
+cat("SECTION 11: TOP DTU GENES\n")
+cat("========================================\n\n")
+
 # Top DTU genes overall
 cat("Top 20 DTU genes (by p-value):\n")
 top_dtu <- head(res_gene_final, 20)
@@ -412,6 +504,13 @@ jag1_dtu <- jag1_dtu[order(jag1_dtu$pvalue), ]
 print(head(jag1_dtu[, c("gene_id", "pvalue", "padj", "JAG1_tier")], 20))
 
 cat("\n")
+
+# ===== SECTION 12: VISUALIZATION =====
+
+cat("========================================\n")
+cat("SECTION 12: VISUALIZATION\n")
+cat("========================================\n\n")
+
 # Plot 1: P-value histogram
 p1 <- ggplot(res_gene_final, aes(x = pvalue)) +
   geom_histogram(binwidth = 0.02, fill = "#2166AC", color = "white", alpha = 0.8) +
@@ -490,6 +589,13 @@ ggsave("03_results/figures/41_DTU_analysis/jag1_enrichment_TP0.pdf", p3, width =
 cat("Saved: jag1_enrichment_TP0.pdf\n")
 
 cat("\n")
+
+# ===== SECTION 13: SAVE RESULTS =====
+
+cat("========================================\n")
+cat("SECTION 13: SAVE RESULTS\n")
+cat("========================================\n\n")
+
 # Prepare transcript-level results
 res_tx_final <- res_tx
 res_tx_final$padj <- p.adjust(res_tx_final$pvalue, method = "BH")
@@ -532,8 +638,13 @@ cat("Saved: dtu_JAG1_targets_TP0.csv (", nrow(jag1_dtu_results), " genes)\n", se
 write.csv(enrichment_df, "03_results/tables/dtu_jag1_enrichment_TP0.csv", row.names = FALSE)
 cat("Saved: dtu_jag1_enrichment_TP0.csv\n\n")
 
+# ===== COMPLETION =====
 
+cat("================================================================\n")
+cat("  SCRIPT 41 COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("SUMMARY (TP0 Analysis):\n")
 cat("  - Samples analyzed:", ncol(tx_counts_tp0_filt), "(TP0 only)\n")
@@ -549,3 +660,4 @@ cat("KEY FINDINGS:\n")
 cat("  - JAG1 target enrichment fold:", round(enrichment_df$Fold_Enrichment[enrichment_df$Tier == "Gold"], 2), "(Gold tier)\n")
 cat("  - Enrichment p-value:", format(enrichment_df$Pvalue[enrichment_df$Tier == "Gold"], digits = 3), "(Gold tier)\n\n")
 
+cat("NEXT: Run 42_isoform_switch_analysis.R for detailed switch analysis\n")

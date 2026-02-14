@@ -203,9 +203,16 @@ de_server <- function(id, selected_gene) {
         return(plotly_empty() %>% layout(title = "No data available"))
       }
 
-      # Need AveExpr for MA plot - simulate if not present
+      # Compute AveExpr from batch-corrected expression matrix if not present
       if (!"AveExpr" %in% names(de)) {
-        de$AveExpr <- rnorm(nrow(de), mean = 5, sd = 2)
+        expr <- load_expression()
+        if (!is.null(expr)) {
+          gene_means <- rowMeans(expr, na.rm = TRUE)
+          de$AveExpr <- gene_means[de$GeneID]
+          de <- de %>% filter(!is.na(AveExpr))
+        } else {
+          de$AveExpr <- NA_real_
+        }
       }
 
       de <- de %>%

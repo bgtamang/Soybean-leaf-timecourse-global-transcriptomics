@@ -1,22 +1,39 @@
+# Script 32: Phenotype-Enhanced Validation
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 32: PHENOTYPE-ENHANCED VALIDATION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/validation", recursive = TRUE, showWarnings = FALSE)
 
+# ===== LOAD REQUIRED PACKAGES =====
 
+cat("Loading required packages...\n")
 library(dplyr)
 library(tidyr)
 cat("  Packages loaded\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load JAG1 targets
 if (file.exists("03_results/checkpoints/14_JAG1_targets.RData")) {
   load("03_results/checkpoints/14_JAG1_targets.RData")
@@ -58,6 +75,13 @@ if (file.exists("03_results/checkpoints/31_phenotype_integration.RData")) {
 }
 
 cat("\n")
+
+# ===== DEFINE VALIDATION WEIGHTS =====
+
+cat("========================================\n")
+cat("SECTION 2: DEFINE VALIDATION WEIGHTS\n")
+cat("========================================\n\n")
+
 # Updated weights including phenotype
 # Total should sum to 1.0
 
@@ -74,6 +98,13 @@ for (w in names(weights)) {
   cat("  ", w, ":", weights[[w]] * 100, "%\n")
 }
 cat("  Total:", sum(unlist(weights)) * 100, "%\n\n")
+
+# ===== CREATE ENHANCED VALIDATION TABLE =====
+
+cat("========================================\n")
+cat("SECTION 3: CREATE VALIDATION TABLE\n")
+cat("========================================\n\n")
+
 # Start with JAG1 targets
 validation_enhanced <- data.frame(
   GeneID = jag1_targets$GeneID,
@@ -92,8 +123,11 @@ if ("Mean_logFC_Pairwise" %in% colnames(jag1_targets)) {
   validation_enhanced$Mean_logFC <- jag1_targets$Mean_logFC_Pairwise
 }
 
+# ===== ADD PHENOTYPE EVIDENCE =====
 
 cat("\n========================================\n")
+cat("SECTION 4: ADD PHENOTYPE EVIDENCE\n")
+cat("========================================\n\n")
 
 if (has_phenotype && exists("gene_pheno_cor")) {
 
@@ -139,8 +173,11 @@ if (has_phenotype && exists("gene_pheno_cor")) {
   validation_enhanced$Pheno_Score <- NA
 }
 
+# ===== ADD OTHER EVIDENCE SCORES =====
 
 cat("\n========================================\n")
+cat("SECTION 5: ADD OTHER EVIDENCE\n")
+cat("========================================\n\n")
 
 # Placeholder scores if previous validation not available
 # These would be filled from previous scripts
@@ -160,8 +197,11 @@ if (!("Functional_Score" %in% colnames(validation_enhanced))) {
   cat("Functional score: using default (0.5)\n")
 }
 
+# ===== CALCULATE COMPOSITE SCORE =====
 
 cat("\n========================================\n")
+cat("SECTION 6: CALCULATE COMPOSITE SCORE\n")
+cat("========================================\n\n")
 
 # Calculate weighted composite score
 validation_enhanced$Composite_Score <- 0
@@ -205,8 +245,11 @@ cat("  Score range:", round(min(validation_enhanced$Composite_Score), 3), "-",
     round(max(validation_enhanced$Composite_Score), 3), "\n")
 cat("  Mean score:", round(mean(validation_enhanced$Composite_Score), 3), "\n")
 
+# ===== CLASSIFY VALIDATION LEVELS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: CLASSIFY VALIDATION LEVELS\n")
+cat("========================================\n\n")
 
 # Create validation tiers based on composite score
 validation_enhanced$Validation_Level <- cut(
@@ -245,8 +288,11 @@ print(table(validation_enhanced$Validation_Level))
 cat("\nEnhanced tier distribution:\n")
 print(table(validation_enhanced$Pheno_Enhanced_Tier))
 
+# ===== IDENTIFY TOP CANDIDATES =====
 
 cat("\n========================================\n")
+cat("SECTION 8: TOP CANDIDATES\n")
+cat("========================================\n\n")
 
 # Sort by composite score
 validation_enhanced <- validation_enhanced[order(-validation_enhanced$Composite_Score), ]
@@ -260,8 +306,11 @@ cat("(Ranked by composite validation score)\n\n")
 print(top_20[, c("GeneID", "Confidence_Tier", "Pheno_Enhanced_Tier",
                   "Composite_Score", "Cor_LW_Ratio")])
 
+# ===== PHENOTYPE-PRIORITIZED LIST =====
 
 cat("\n========================================\n")
+cat("SECTION 9: PHENOTYPE-PRIORITIZED TARGETS\n")
+cat("========================================\n\n")
 
 if (has_phenotype) {
   # Genes with BOTH high DE tier AND phenotype correlation
@@ -288,8 +337,11 @@ if (has_phenotype) {
   }
 }
 
+# ===== SAVE RESULTS =====
 
 cat("\n========================================\n")
+cat("SECTION 10: SAVE RESULTS\n")
+cat("========================================\n\n")
 
 # Save full validation table
 write.csv(validation_enhanced,
@@ -306,8 +358,11 @@ write.csv(high_confidence,
           row.names = FALSE)
 cat("Saved: high_confidence_targets.csv (", nrow(high_confidence), " genes)\n")
 
+# ===== VISUALIZATION =====
 
 cat("\n========================================\n")
+cat("SECTION 11: VISUALIZATION\n")
+cat("========================================\n\n")
 
 dir.create("03_results/figures/32_validation", recursive = TRUE, showWarnings = FALSE)
 
@@ -378,8 +433,11 @@ if (nrow(top_20) >= 10) {
   cat("Saved: top_targets_evidence.png\n")
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 12: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 save(
   validation_enhanced,
@@ -389,9 +447,13 @@ save(
 
 cat("Checkpoint saved: 32_phenotype_validation.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 32 COMPLETE: PHENOTYPE-ENHANCED VALIDATION\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("VALIDATION SUMMARY:\n")
 cat("  Total JAG1 targets validated:", nrow(validation_enhanced), "\n")

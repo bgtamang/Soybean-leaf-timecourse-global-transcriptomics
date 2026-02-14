@@ -1,27 +1,49 @@
+# Script 02: Sample Metadata
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 02: SAMPLE METADATA\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 # Define base directory
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/02_metadata", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c("ggplot2", "dplyr", "tidyr", "RColorBrewer")
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
 
+# ===== LOAD PREVIOUS CHECKPOINT =====
 
 cat("Loading previous checkpoint...\n")
 load("03_results/checkpoints/01_data_imported.RData")
 cat("  Loaded: raw_counts (", nrow(raw_counts), " genes x ", ncol(raw_counts), " samples)\n\n", sep = "")
+
+# ===== LOAD SAMPLE METADATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD SAMPLE METADATA\n")
+cat("========================================\n\n")
+
+# ===== INPUT DATA LOCATION =====
 # All input data is stored in 01_data/ for self-contained analysis
 data_dir <- "01_data"
 
@@ -67,6 +89,13 @@ cat("\nMetadata loaded:\n")
 cat("  Samples:", nrow(targets), "\n")
 cat("  Variables:", ncol(targets), "\n")
 cat("  Column names:", paste(colnames(targets), collapse = ", "), "\n\n")
+
+# ===== VERIFY SAMPLE MATCHING =====
+
+cat("========================================\n")
+cat("SECTION 2: VERIFY SAMPLE MATCHING\n")
+cat("========================================\n\n")
+
 # Get sample names from count matrix
 count_samples <- colnames(raw_counts)
 meta_samples <- rownames(targets)
@@ -87,6 +116,13 @@ if (all(count_samples %in% meta_samples) && all(meta_samples %in% count_samples)
 # Reorder targets to match count matrix
 targets <- targets[count_samples, ]
 cat("Reordered metadata to match count matrix column order\n\n")
+
+# ===== DEFINE EXPERIMENTAL FACTORS =====
+
+cat("========================================\n")
+cat("SECTION 3: DEFINE EXPERIMENTAL FACTORS\n")
+cat("========================================\n\n")
+
 # Ensure key columns exist and are properly formatted
 # Line
 if ("Line" %in% colnames(targets)) {
@@ -120,6 +156,7 @@ if ("Rep" %in% colnames(targets)) {
   cat("Rep factor levels:", paste(levels(targets$Rep), collapse = ", "), "\n")
 }
 
+# ===== CREATE DERIVED VARIABLES =====
 
 cat("\nCreating derived variables...\n")
 
@@ -142,6 +179,13 @@ targets$Timepoint_numeric <- as.numeric(gsub("TP", "", targets$Timepoint))
 targets$Genotype <- targets$Leaf_type
 
 cat("  Created LeafLine, FullGroup, Timepoint_numeric, Genotype\n\n")
+
+# ===== EXPERIMENTAL DESIGN SUMMARY =====
+
+cat("========================================\n")
+cat("SECTION 4: EXPERIMENTAL DESIGN SUMMARY\n")
+cat("========================================\n\n")
+
 cat("Experimental Design:\n")
 cat("  Total samples: 60\n")
 cat("  Lines: 4 (2 Broad, 2 Narrow)\n")
@@ -169,6 +213,13 @@ cat("  Batch 2022: TP0 samples (meristem tissue)\n")
 cat("  Batch 2021: TP1-TP4 samples (leaf development)\n")
 cat("  NOTE: Batch is partially confounded with timepoint!\n")
 cat("        This will be addressed in batch correction step.\n\n")
+
+# ===== SAMPLE QC METRICS =====
+
+cat("========================================\n")
+cat("SECTION 5: SAMPLE QC METRICS\n")
+cat("========================================\n\n")
+
 # Check if QC columns exist in targets
 qc_cols <- c("NumReads", "Assigned_to_gene", "Multimapped", "Unmapped")
 available_qc <- qc_cols[qc_cols %in% colnames(targets)]
@@ -190,6 +241,13 @@ if (length(available_qc) > 0) {
 } else {
   cat("No QC metrics found in metadata\n\n")
 }
+
+# ===== FLAG POTENTIALLY PROBLEMATIC SAMPLES =====
+
+cat("========================================\n")
+cat("SECTION 6: SAMPLE FLAGS\n")
+cat("========================================\n\n")
+
 # Initialize flag column
 targets$QC_flag <- "OK"
 
@@ -207,8 +265,11 @@ flag_summary <- table(targets$QC_flag)
 cat("Sample QC flags:\n")
 print(flag_summary)
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 7: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: Experimental design layout
 cat("Creating experimental design visualization...\n")
@@ -294,6 +355,7 @@ if ("NumReads" %in% colnames(targets)) {
   cat("  Saved: 03_results/figures/02_metadata/reads_by_group.png\n")
 }
 
+# ===== SAVE EXPERIMENTAL DESIGN TABLE =====
 
 cat("\nSaving experimental design table...\n")
 
@@ -311,8 +373,11 @@ write.csv(design_export,
           row.names = FALSE)
 cat("  Saved: 03_results/tables/experimental_design.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 8: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Save checkpoint with all important objects
 save(
@@ -325,14 +390,20 @@ save(
 cat("Saved checkpoint: 03_results/checkpoints/02_sample_metadata.RData\n")
 cat("  Contains: raw_counts, targets, PARAMS\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 02: SAMPLE METADATA - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Experimental Design Summary:\n")
@@ -342,3 +413,5 @@ cat("    - 3 Replicates per condition\n")
 cat("    - 2 Batches: 2022 (TP0), 2021 (TP1-TP4)\n")
 cat("    - Flagged samples:", sum(targets$QC_flag != "OK"), "\n")
 cat("\n")
+cat("  Next: Run 03_quality_control.R\n")
+cat("================================================================\n")

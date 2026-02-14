@@ -1,18 +1,31 @@
+# Script 06: Sample Validation
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 06: SAMPLE VALIDATION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/06_validation", recursive = TRUE, showWarnings = FALSE)
 dir.create("04_reports", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -24,10 +37,24 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/05_normalized.RData")
 cat("Loaded checkpoint from script 05\n")
 cat("  Voom objects: v_full, v_tp1_4\n")
 cat("  Design matrices: design_full, design_tp1_4\n\n")
+
+# ===== SECTION 2: FLAGGED SAMPLE ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 2: FLAGGED SAMPLE DEEP ANALYSIS\n")
+cat("========================================\n\n")
+
 # The flagged sample
 problem_sample <- "745_T2_R2"
 cat("Analyzing flagged sample:", problem_sample, "\n\n")
@@ -43,6 +70,7 @@ if (problem_sample %in% rownames(targets)) {
   cat("  QC flag:", as.character(sample_info$QC_flag), "\n\n")
 }
 
+# ===== Detailed correlation analysis =====
 
 cat("Detailed correlation analysis:\n\n")
 
@@ -91,6 +119,13 @@ cat("  Correlation with best match:",
 cor_diff <- tp_summary$Mean_Cor[tp_summary$Timepoint == best_tp] -
             tp_summary$Mean_Cor[tp_summary$Timepoint == expected_tp]
 cat("  Difference:", round(cor_diff, 4), "\n\n")
+
+# ===== SECTION 3: IMPACT ASSESSMENT =====
+
+cat("========================================\n")
+cat("SECTION 3: IMPACT ASSESSMENT\n")
+cat("========================================\n\n")
+
 # What happens if we remove this sample?
 cat("Impact of removing", problem_sample, ":\n\n")
 
@@ -108,6 +143,13 @@ if (current_reps - 1 < 2) {
 } else {
   cat("  Removal would leave adequate replicates\n\n")
 }
+
+# ===== SECTION 4: SENSITIVITY ANALYSIS SETUP =====
+
+cat("========================================\n")
+cat("SECTION 4: CREATE ANALYSIS DATASETS\n")
+cat("========================================\n\n")
+
 # Decision: Keep sample but create datasets for sensitivity analysis
 cat("DECISION: Keep", problem_sample, "in primary analysis\n")
 cat("RATIONALE:\n")
@@ -149,6 +191,13 @@ cat("  Use: Verify key findings are robust\n\n")
 cat("Track 3: BATCH-FREE (TP1-4 only, no batch confounding)\n")
 cat("  Samples:", ncol(v_tp1_4$E), "\n")
 cat("  Use: Results without batch correction concerns\n\n")
+
+# ===== SECTION 5: VISUALIZATIONS =====
+
+cat("========================================\n")
+cat("SECTION 5: VISUALIZATIONS\n")
+cat("========================================\n\n")
+
 # Colors
 tp_colors <- brewer.pal(5, "YlOrRd")
 names(tp_colors) <- c("TP0", "TP1", "TP2", "TP3", "TP4")
@@ -254,8 +303,11 @@ legend("topright", legend = names(tp_colors)[2:5], col = tp_colors[2:5], pch = 1
 dev.off()
 cat("  Saved: 03_results/figures/06_validation/analysis_tracks.png\n")
 
+# ===== SECTION 6: VALIDATION REPORT =====
 
 cat("\n========================================\n")
+cat("SECTION 6: VALIDATION REPORT\n")
+cat("========================================\n\n")
 
 # Create validation report table
 validation_report <- data.frame(
@@ -290,13 +342,17 @@ cat("Saved: 03_results/tables/sample_validation_report.csv\n\n")
 
 print(validation_report)
 
+# ===== SECTION 7: SAMPLE DECISION DOCUMENT =====
 
 cat("\n========================================\n")
+cat("SECTION 7: DECISION DOCUMENT\n")
+cat("========================================\n\n")
 
 # Create markdown report
 decision_doc <- paste0(
 "# Sample Validation Decision Report
 **Date:** ", format(Sys.time(), "%Y-%m-%d"), "
+**Project:** GmJAG1 Soybean RNA-Seq Analysis
 
 ---
 
@@ -366,8 +422,11 @@ In methods section:
 writeLines(decision_doc, "04_reports/sample_decision.md")
 cat("Saved: 04_reports/sample_decision.md\n")
 
+# ===== SECTION 8: SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 8: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Save all analysis tracks
 save(
@@ -409,14 +468,20 @@ cat("    - SENSITIVITY: v_sensitivity, design_sensitivity, targets_sensitivity\n
 cat("    - BATCH-FREE: v_tp1_4, design_tp1_4, targets_tp1_4\n")
 cat("    - Validation: problem_sample, tp_summary, validation_report\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 06: SAMPLE VALIDATION - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Decision Summary:\n")
@@ -428,3 +493,5 @@ cat("    - Batch-free dataset: 48 samples\n")
 cat("\n")
 cat("  Analysis tracks ready for differential expression\n")
 cat("\n")
+cat("  Next: Run 07_PCA_clustering.R (Exploratory Analysis)\n")
+cat("================================================================\n")

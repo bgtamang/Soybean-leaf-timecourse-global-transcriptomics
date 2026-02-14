@@ -1,18 +1,31 @@
+# Script 31: Phenotype Integration
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 31: PHENOTYPE INTEGRATION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/phenotype", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/31_phenotype", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "ggplot2",
   "dplyr",
@@ -32,6 +45,13 @@ for (pkg in required_packages) {
 }
 
 cat("\n")
+
+# ===== CONFIGURATION =====
+
+cat("========================================\n")
+cat("SECTION 1: CONFIGURATION\n")
+cat("========================================\n\n")
+
 #--- PHENOTYPE DATA FILE ---#
 # Your actual phenotype data file
 phenotype_file <- "01_data/soybean_leaf_data_long_format.csv"
@@ -59,6 +79,13 @@ cat("Configuration set:\n")
 cat("  Phenotype file:", phenotype_file, "\n")
 cat("  Cotyledon leaves (no difference):", paste(cotyledon_leaves, collapse = ", "), "\n")
 cat("  True leaves (phenotype differs):", paste(true_leaves, collapse = ", "), "\n\n")
+
+# ===== LOAD RNA-SEQ DATA =====
+
+cat("========================================\n")
+cat("SECTION 2: LOAD RNA-SEQ DATA\n")
+cat("========================================\n\n")
+
 # Load expression data
 if (file.exists("03_results/checkpoints/06_validated.RData")) {
   load("03_results/checkpoints/06_validated.RData")
@@ -88,6 +115,13 @@ if (file.exists("03_results/checkpoints/21_WGCNA_JAG1.RData")) {
 }
 
 cat("\n")
+
+# ===== LOAD PHENOTYPE DATA =====
+
+cat("========================================\n")
+cat("SECTION 3: LOAD PHENOTYPE DATA\n")
+cat("========================================\n\n")
+
 if (file.exists(phenotype_file)) {
   # Load actual phenotype data (long format)
   pheno_long <- read.csv(phenotype_file, stringsAsFactors = FALSE)
@@ -121,8 +155,11 @@ if (file.exists(phenotype_file)) {
   stop("Phenotype file required. Stopping.")
 }
 
+# ===== CALCULATE DERIVED TRAITS =====
 
 cat("\n========================================\n")
+cat("SECTION 4: ANALYZE PHENOTYPE DATA\n")
+cat("========================================\n\n")
 
 # Work with the wide format data
 pheno_data <- pheno_wide
@@ -184,7 +221,9 @@ print(as.data.frame(mature_summary))
 cat("\n")
 
 # KEY COMPARISON: Broad vs Narrow at maturity
+cat("========================================\n")
 cat("KEY PHENOTYPE COMPARISON\n")
+cat("========================================\n\n")
 
 for (lt in c("V1", "V2")) {
   broad_ratio <- mature_summary$Final_Ratio[mature_summary$Leaf == "Broad" & mature_summary$Leaf_Type == lt]
@@ -203,8 +242,11 @@ for (lt in c("V1", "V2")) {
 write.csv(pheno_summary, "03_results/tables/phenotype/phenotype_summary.csv", row.names = FALSE)
 write.csv(mature_summary, "03_results/tables/phenotype/mature_leaf_summary.csv", row.names = FALSE)
 
+# ===== GROWTH TRAJECTORY ANALYSIS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: GROWTH TRAJECTORY ANALYSIS\n")
+cat("========================================\n\n")
 
 # Analyze how L:W ratio changes over time for V1 leaves
 v1_trajectory <- pheno_v1v2 %>%
@@ -230,6 +272,7 @@ print(head(narrow_v1[order(narrow_v1$Day), ], 10))
 # Calculate when ratio divergence becomes significant
 cat("\n========================================\n")
 cat("L:W RATIO DIVERGENCE ANALYSIS\n")
+cat("========================================\n\n")
 
 # For each day, test if Broad vs Narrow ratios are different
 ratio_comparison <- pheno_v1v2 %>%
@@ -268,8 +311,11 @@ cat("\nFirst day with significant B vs N difference:", first_sig_day, "\n")
 
 write.csv(ratio_comparison, "03_results/tables/phenotype/ratio_divergence_by_day.csv", row.names = FALSE)
 
+# ===== CREATE PHENOTYPE TRAITS FOR RNA-SEQ SAMPLES =====
 
 cat("\n========================================\n")
+cat("SECTION 6: CREATE PHENOTYPE TRAITS\n")
+cat("========================================\n\n")
 
 # Since phenotype data is collected by Broad/Narrow (not by specific genotype),
 # we assign phenotype values to RNA-seq samples based on their leaf type
@@ -312,8 +358,11 @@ print(pheno_traits)
 
 write.csv(pheno_traits, "03_results/tables/phenotype/phenotype_traits.csv", row.names = FALSE)
 
+# ===== CREATE TRAIT MATRIX FOR RNA-SEQ SAMPLES =====
 
 cat("\n========================================\n")
+cat("SECTION 7: CREATE TRAIT MATRIX\n")
+cat("========================================\n\n")
 
 # Create trait matrix aligned with RNA-seq samples
 # Each row = sample, columns = phenotypic traits
@@ -360,6 +409,7 @@ if (exists("targets_primary")) {
   cat("Broad samples:", sum(trait_matrix$Leaf_type == "Broad"), "\n")
   cat("Narrow samples:", sum(trait_matrix$Leaf_type == "Narrow"), "\n\n")
 
+  # ===== LINE-SPECIFIC L:W RATIOS (ACTUAL MEASURED PHENOTYPES) =====
   # These are the actual measured leaf L:W ratios for each soybean line
   # Using line-specific values gives 4 distinct phenotype values instead of 2
   line_lw_ratios <- c(
@@ -449,8 +499,11 @@ if (exists("targets_primary")) {
   cat("Load validated expression data (checkpoint 06) first.\n")
 }
 
+# ===== GENE-PHENOTYPE CORRELATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 8: GENE-PHENOTYPE CORRELATIONS\n")
+cat("========================================\n\n")
 
 # Calculate correlation between each gene and phenotypic traits
 # Focus on V1 L:W ratio as the key trait
@@ -547,8 +600,11 @@ if (exists("trait_matrix") && exists("v_primary")) {
   gene_pheno_cor <- NULL
 }
 
+# ===== WGCNA MODULE-PHENOTYPE CORRELATION =====
 
 cat("\n========================================\n")
+cat("SECTION 9: MODULE-PHENOTYPE CORRELATION\n")
+cat("========================================\n\n")
 
 if (wgcna_available && exists("MEs") && exists("trait_matrix")) {
 
@@ -614,8 +670,11 @@ if (wgcna_available && exists("MEs") && exists("trait_matrix")) {
   cat("Run WGCNA scripts (18-21) first, then re-run this script.\n")
 }
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 10: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: V1 Leaf growth trajectories (Broad vs Narrow)
 png("03_results/figures/31_phenotype/v1_growth_trajectories.png",
@@ -760,8 +819,11 @@ if (exists("ratio_comparison")) {
   cat("Saved: ratio_divergence.png\n")
 }
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 11: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 phenotype_results <- list(
   pheno_data = pheno_data,
@@ -787,9 +849,13 @@ save(
 
 cat("Checkpoint saved: 31_phenotype_integration.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 31 COMPLETE: PHENOTYPE INTEGRATION\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("PHENOTYPE ANALYSIS SUMMARY:\n")
 cat("  Leaf types analyzed:", paste(unique(pheno_data$Leaf), collapse = ", "), "\n")
@@ -831,3 +897,4 @@ cat("  - 03_results/tables/phenotype/gene_phenotype_correlations.csv\n")
 cat("  - 03_results/tables/phenotype/top_LW_ratio_genes.csv\n")
 cat("  - 03_results/figures/31_phenotype/*.png\n\n")
 
+cat("NEXT: Script 32 - Phenotype Validation\n\n")

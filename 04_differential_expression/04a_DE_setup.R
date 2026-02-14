@@ -1,14 +1,27 @@
+# Script 10: Differential Expression Setup
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 10: DIFFERENTIAL EXPRESSION SETUP\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -17,6 +30,13 @@ required_packages <- c(
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/06_validated.RData")
 cat("Loaded checkpoint from script 06\n\n")
 
@@ -39,6 +59,13 @@ if (!"group" %in% colnames(targets)) {
 cat("Using PRIMARY dataset:\n")
 cat("  Samples:", ncol(dge), "\n")
 cat("  Genes:", nrow(dge), "\n\n")
+
+# ===== SECTION 2: VERIFY EXPERIMENTAL GROUPS =====
+
+cat("========================================\n")
+cat("SECTION 2: EXPERIMENTAL GROUPS\n")
+cat("========================================\n\n")
+
 # Check group structure
 cat("Experimental groups:\n")
 print(table(targets$group))
@@ -55,8 +82,11 @@ group_levels <- levels(targets$group)
 cat("Group levels (", length(group_levels), " total):\n", sep = "")
 print(group_levels)
 
+# ===== SECTION 3: CREATE DESIGN MATRIX =====
 
 cat("\n========================================\n")
+cat("SECTION 3: DESIGN MATRIX\n")
+cat("========================================\n\n")
 
 # Create design matrix with one coefficient per group (no intercept)
 design <- model.matrix(~ 0 + group, data = targets)
@@ -74,6 +104,13 @@ cat("  Columns:", paste(colnames(design), collapse = ", "), "\n\n")
 # Save design matrix
 write.csv(design, "03_results/tables/design_matrix.csv")
 cat("Saved: 03_results/tables/design_matrix.csv\n\n")
+
+# ===== SECTION 4: CREATE CONTRAST MATRIX =====
+
+cat("========================================\n")
+cat("SECTION 4: CONTRAST MATRIX\n")
+cat("========================================\n\n")
+
 cat("Creating contrasts for all relevant comparisons...\n\n")
 
 # Get unique lines and timepoints
@@ -208,8 +245,11 @@ cat("  Total contrasts:", ncol(contrast_matrix), "\n\n")
 cat("Contrasts by type:\n")
 print(table(contrast_desc$Type))
 
+# ===== SECTION 5: KEY CONTRASTS FOR JAG1 ANALYSIS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: KEY CONTRASTS FOR JAG1\n")
+cat("========================================\n\n")
 
 # Identify the key contrasts for JAG1 target identification
 # These are the Narrow vs Broad comparisons at TP0
@@ -227,8 +267,11 @@ for (kc in key_contrasts) {
 cat("\n  Plus pooled comparison:\n")
 cat("  - NarrowvsBroad_TP0 : TP0: Narrow (pooled) vs Broad (pooled)\n")
 
+# ===== SECTION 6: SAVE OUTPUTS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SAVE OUTPUTS\n")
+cat("========================================\n\n")
 
 # Save contrast matrix
 write.csv(contrast_matrix, "03_results/tables/contrast_matrix.csv")
@@ -244,14 +287,20 @@ save(dge, targets, design, contrast_matrix, contrast_list, contrast_desc,
      file = "03_results/checkpoints/10_DE_setup.RData")
 cat("Saved: 03_results/checkpoints/10_DE_setup.RData\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 10: DE SETUP - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -263,3 +312,5 @@ cat("    - Between-line (TP0):", sum(contrast_desc$Type == "Between_line_TP0"), 
 cat("    - Within leaf-type:", sum(contrast_desc$Type == "Within_leaftype_TP0"), "\n")
 cat("    - Pooled leaf-type:", sum(contrast_desc$Type == "Pooled_leaftype"), "\n")
 cat("\n")
+cat("  Next: Run 11_DE_analysis.R\n")
+cat("================================================================\n")

@@ -57,7 +57,7 @@ go_silver <- safe_load("go_silver.rds")
 go_bronze <- safe_load("go_bronze.rds")
 
 # Expression and DE data (GENE-LEVEL, not transcript-level)
-# Run regenerate_dashboard_data.R if you need to recreate from checkpoints
+# Run data_prep/prepare_data.R if you need to recreate from checkpoints
 expression_matrix <- safe_load("expression_matrix.rds")
 de_results <- safe_load("de_results.rds")
 contrast_list <- safe_load("contrast_list.rds")
@@ -326,13 +326,13 @@ leaftype_colors <- c(
   "Narrow" = "#E94F37"   # Vermillion red
 )
 
-# Timepoint colors (sequential, distinguishable)
+# Timepoint colors (viridis gradient — matches publication Fig 2A)
 timepoint_colors <- c(
-  "TP0" = "#1B4F72",  # Dark blue
-  "TP1" = "#2874A6",  # Medium blue
-  "TP2" = "#5DADE2",  # Light blue
-  "TP3" = "#F39C12",  # Orange
-  "TP4" = "#C0392B"   # Dark red
+  "TP0" = "#440154",  # Dark purple (meristem)
+  "TP1" = "#3B528B",  # Blue
+  "TP2" = "#21908C",  # Teal
+  "TP3" = "#5DC863",  # Green
+  "TP4" = "#FDE725"   # Yellow (mature)
 )
 
 # Scientific color palettes
@@ -355,11 +355,12 @@ project_info <- list(
   title = "GmJAG1 RNA-Seq Explorer",
   subtitle = "Soybean Leaf Development Transcriptome",
   n_samples = if (!is.null(experimental_design)) nrow(experimental_design) else 0,
-  n_genes = if (!is.null(expression_matrix)) nrow(expression_matrix) else 0,  # Gene-level expression matrix
+  n_genes = if (!is.null(expression_matrix)) nrow(expression_matrix) else 0,
   n_targets = if (!is.null(jag1_targets)) nrow(jag1_targets) else 0,
   n_gold = if (!is.null(jag1_targets)) sum(jag1_targets$Confidence_Tier == "Gold") else 0,
   n_silver = if (!is.null(jag1_targets)) sum(jag1_targets$Confidence_Tier == "Silver") else 0,
-  n_bronze = if (!is.null(jag1_targets)) sum(jag1_targets$Confidence_Tier == "Bronze") else 0
+  n_bronze = if (!is.null(jag1_targets)) sum(jag1_targets$Confidence_Tier == "Bronze") else 0,
+  n_modules = if (!is.null(module_sizes)) nrow(module_sizes) else 0
 )
 
 # ============================================================

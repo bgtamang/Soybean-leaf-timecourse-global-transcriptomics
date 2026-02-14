@@ -1,17 +1,30 @@
+# Script 21: JAG1 Module Analysis and Hub Genes
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 21: JAG1 MODULE ANALYSIS & HUB GENES\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/21_WGCNA_JAG1", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "WGCNA",
   "ggplot2",
@@ -25,6 +38,13 @@ required_packages <- c(
 invisible(lapply(required_packages, library, character.only = TRUE))
 enableWGCNAThreads()
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINTS =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/20_WGCNA_traits.RData")
 cat("Loaded WGCNA trait data\n")
 
@@ -44,6 +64,13 @@ JAG2_ID <- "Glyma.10G273800"
 cat("Key genes:\n")
 cat("  JAG1:", JAG1_ID, "\n")
 cat("  JAG2:", JAG2_ID, "\n\n")
+
+# ===== MODULE MEMBERSHIP CALCULATION =====
+
+cat("========================================\n")
+cat("SECTION 2: MODULE MEMBERSHIP (kME)\n")
+cat("========================================\n\n")
+
 # Calculate module membership (correlation of gene expression with module eigengene)
 # kME = correlation between gene expression and module eigengene
 
@@ -58,6 +85,13 @@ colnames(kMEs) <- paste0("kME_", gsub("ME", "", colnames(MEs)))
 cat("Module membership (kME) calculated\n")
 cat("  Genes:", nrow(kMEs), "\n")
 cat("  Modules:", ncol(kMEs), "\n\n")
+
+# ===== JAG1 MODULE ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 3: JAG1 MODULE MEMBERSHIP\n")
+cat("========================================\n\n")
+
 # Find JAG1's module
 genes_in_wgcna <- colnames(datExpr)
 
@@ -101,8 +135,11 @@ if (JAG2_ID %in% genes_in_wgcna) {
   JAG2_module <- NA
 }
 
+# ===== JAG1 TARGETS MODULE ENRICHMENT =====
 
 cat("\n========================================\n")
+cat("SECTION 4: JAG1 TARGET MODULE ENRICHMENT\n")
+cat("========================================\n\n")
 
 # Get JAG1 targets
 jag1_target_genes <- unique(jag1_targets$GeneID)
@@ -171,8 +208,11 @@ write.csv(enrichment_results, "03_results/tables/WGCNA/JAG1_module_enrichment.cs
           row.names = FALSE)
 cat("\nSaved: JAG1_module_enrichment.csv\n")
 
+# ===== HUB GENE IDENTIFICATION =====
 
 cat("\n========================================\n")
+cat("SECTION 5: HUB GENE IDENTIFICATION\n")
+cat("========================================\n\n")
 
 # Hub genes: high kME in their module (kME > 0.8)
 hub_threshold <- 0.8
@@ -229,9 +269,12 @@ if (nrow(target_hubs) > 0) {
 write.csv(hub_genes, "03_results/tables/WGCNA/hub_genes.csv", row.names = FALSE)
 cat("\nSaved: hub_genes.csv\n")
 
+# ===== MODULES CORRELATED WITH L:W RATIO (ACTUAL PHENOTYPE) =====
 # UPDATED: Use Line_LW_Ratio instead of Narrow_TP0 for consistency with Figure 5
 
 cat("\n========================================\n")
+cat("SECTION 6: PHENOTYPE-ASSOCIATED MODULES\n")
+cat("========================================\n\n")
 
 # Use Line_LW_Ratio (actual measured L:W ratios per line) if available
 # This is consistent with Figure 5 module-trait correlations
@@ -284,10 +327,13 @@ if ("Narrow_TP0" %in% colnames(moduleTraitCor)) {
                                                          rownames(moduleTraitCor)), "Narrow_TP0"]
 }
 
+# ===== MODULES CORRELATED WITH PHENOTYPE TRAITS =====
 
 # Check if phenotype traits are available
 if (exists("phenotype_available") && phenotype_available && "V1_Ratio" %in% colnames(traitData)) {
   cat("\n========================================\n")
+  cat("SECTION 6B: PHENOTYPE-ASSOCIATED MODULES\n")
+  cat("========================================\n\n")
 
   v1_ratio_cor <- moduleTraitCor[, "V1_Ratio"]
   v1_ratio_pval <- moduleTraitPvalue[, "V1_Ratio"]
@@ -330,8 +376,11 @@ if (exists("phenotype_available") && phenotype_available && "V1_Ratio" %in% coln
   }
 }
 
+# ===== INTEGRATED VISUALIZATION =====
 
 cat("\n========================================\n")
+cat("SECTION 7: INTEGRATED VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: JAG1 target enrichment across modules
 png("03_results/figures/21_WGCNA_JAG1/target_enrichment.png",
@@ -471,8 +520,11 @@ if (nrow(hub_genes) > 0) {
   cat("Saved: top_hubs_heatmap.png\n")
 }
 
+# ===== JAG1 MODULE DETAILED ANALYSIS =====
 
 cat("\n========================================\n")
+cat("SECTION 8: JAG1 MODULE DETAILS\n")
+cat("========================================\n\n")
 
 if (!is.na(JAG1_module) && JAG1_module != 0) {
   # Get all genes in JAG1's module
@@ -571,8 +623,11 @@ if (!is.na(JAG1_module) && JAG1_module != 0) {
   cat("JAG1 is not assigned to a non-grey module\n")
 }
 
+# ===== SAVE INTEGRATED RESULTS =====
 
 cat("\n========================================\n")
+cat("SECTION 9: SAVE INTEGRATED RESULTS\n")
+cat("========================================\n\n")
 
 # Create master table of module-JAG1 relationships
 module_jag1_summary <- data.frame(
@@ -609,8 +664,11 @@ write.csv(module_jag1_summary, "03_results/tables/WGCNA/module_JAG1_summary.csv"
           row.names = FALSE)
 cat("Saved: module_JAG1_summary.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 10: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Prepare objects to save
 objects_to_save <- c(
@@ -656,9 +714,13 @@ save(
 
 cat("Checkpoint saved: 21_WGCNA_JAG1.RData\n")
 
+# ===== SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 21 COMPLETE: JAG1 MODULE ANALYSIS & HUB GENES\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - JAG1 module:", ifelse(is.na(JAG1_module), "Not in WGCNA", paste(JAG1_module, "(", JAG1_module_color, ")")), "\n")
@@ -686,3 +748,5 @@ cat("    - hub_gene_distribution.png\n")
 cat("    - top_hubs_heatmap.png\n")
 cat("    - JAG1_module_expression.png\n\n")
 
+cat("STAGE 6 COMPLETE!\n")
+cat("NEXT: Stage 7 - GO/KEGG Enrichment Analysis\n\n")

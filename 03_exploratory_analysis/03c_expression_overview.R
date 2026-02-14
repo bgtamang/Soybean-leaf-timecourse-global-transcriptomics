@@ -1,17 +1,30 @@
+# Script 09: Expression Overview
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 09: EXPRESSION OVERVIEW\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/09_expression", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -32,6 +45,13 @@ if (length(missing) > 0) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/06_validated.RData")
 cat("Loaded checkpoint from script 06\n\n")
 
@@ -46,6 +66,7 @@ if (!"Sample" %in% colnames(targets)) {
 
 cat("Expression matrix:", nrow(expr_mat), "genes x", ncol(expr_mat), "samples\n\n")
 
+# ===== DEFINE COLORS (dynamic based on actual data) =====
 
 # Get actual factor levels from data
 tp_levels <- unique(as.character(targets$Timepoint))
@@ -68,6 +89,13 @@ cat("Color mappings created for:\n")
 cat("  Timepoints:", paste(names(timepoint_colors), collapse = ", "), "\n")
 cat("  Leaf types:", paste(names(leaf_colors), collapse = ", "), "\n")
 cat("  Lines:", paste(names(line_colors), collapse = ", "), "\n\n")
+
+# ===== SECTION 2: GLOBAL EXPRESSION DISTRIBUTIONS =====
+
+cat("========================================\n")
+cat("SECTION 2: GLOBAL EXPRESSION DISTRIBUTIONS\n")
+cat("========================================\n\n")
+
 # --- Plot 1: Expression density by sample ---
 cat("Creating expression density plot...\n")
 
@@ -133,6 +161,13 @@ sample_stats <- expr_long %>%
 
 write.csv(sample_stats, "03_results/tables/expression_summary.csv", row.names = FALSE)
 cat("  Saved: 03_results/tables/expression_summary.csv\n\n")
+
+# ===== SECTION 3: JAG1/JAG2 EXPRESSION ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 3: JAG1/JAG2 EXPRESSION PROFILES\n")
+cat("========================================\n\n")
+
 # Find JAG genes - CORRECT GENE IDs:
 # GmJAG1 = Glyma.20G116200 (controls leaf shape, D9H mutation in EAR motif in narrow genotypes)
 # GmJAG2 = Glyma.10G273800 (paralog)
@@ -238,6 +273,13 @@ if (length(jag_genes) > 0) {
   cat("  Checking gene ID format...\n")
   cat("  Sample gene IDs:", head(rownames(expr_mat), 5), "\n\n")
 }
+
+# ===== SECTION 4: HOUSEKEEPING GENE STABILITY =====
+
+cat("========================================\n")
+cat("SECTION 4: HOUSEKEEPING GENE STABILITY\n")
+cat("========================================\n\n")
+
 # Load housekeeping genes from Machado et al. 2019
 hk_file <- file.path(base_dir, "Housekeeping_genes_Machado_et_al_2019.xlsx")
 
@@ -470,8 +512,11 @@ if (length(hk_genes) > 0) {
   cat("  No housekeeping genes found\n")
 }
 
+# ===== SECTION 5: TEMPORAL EXPRESSION TRENDS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: TEMPORAL EXPRESSION TRENDS\n")
+cat("========================================\n\n")
 
 # Calculate mean expression per timepoint
 temporal_means <- expr_long %>%
@@ -534,8 +579,11 @@ if ("TP0" %in% colnames(temporal_means)) {
   cat("  Saved: 03_results/tables/temporal_dynamics.csv\n")
 }
 
+# ===== SECTION 6: EXPRESSION LEVEL CATEGORIES =====
 
 cat("\n========================================\n")
+cat("SECTION 6: EXPRESSION LEVEL CATEGORIES\n")
+cat("========================================\n\n")
 
 # Calculate overall gene statistics
 gene_stats <- data.frame(
@@ -616,8 +664,11 @@ cat("  Saved: 03_results/figures/09_expression/mean_cv_relationship.png\n")
 write.csv(gene_stats, "03_results/tables/gene_expression_stats.csv", row.names = FALSE)
 cat("\nSaved: 03_results/tables/gene_expression_stats.csv\n")
 
+# ===== SECTION 7: HIGHLY EXPRESSED GENES =====
 
 cat("\n========================================\n")
+cat("SECTION 7: TOP EXPRESSED GENES\n")
+cat("========================================\n\n")
 
 # Get top 50 most highly expressed genes
 top_expressed <- gene_stats %>%
@@ -663,14 +714,20 @@ cat("  Saved: 03_results/figures/09_expression/top_expressed_heatmap.png\n")
 write.csv(top_expressed, "03_results/tables/top_expressed_genes.csv", row.names = FALSE)
 cat("  Saved: 03_results/tables/top_expressed_genes.csv\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 09: EXPRESSION OVERVIEW - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Figures Generated:\n")
@@ -696,3 +753,6 @@ cat("    - temporal_dynamics.csv\n")
 cat("    - gene_expression_stats.csv\n")
 cat("    - top_expressed_genes.csv\n")
 cat("\n")
+cat("  STAGE 3 EXPLORATORY ANALYSIS COMPLETE\n")
+cat("  Next: Run Stage 4 scripts (10-13) for Differential Expression\n")
+cat("================================================================\n")

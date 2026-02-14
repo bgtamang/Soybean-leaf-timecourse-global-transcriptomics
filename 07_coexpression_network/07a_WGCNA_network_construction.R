@@ -1,15 +1,23 @@
+# Script 18: WGCNA Network Construction
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 18: WGCNA NETWORK CONSTRUCTION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
 #base_dir <-"C:/Users/bgtam/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/"
 
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
@@ -19,6 +27,11 @@ dir.create("03_results/WGCNA", recursive = TRUE, showWarnings = FALSE)  # For TO
 
 # Track overall timing
 script_start_time <- Sys.time()
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "WGCNA",
   "edgeR",
@@ -47,6 +60,13 @@ invisible(lapply(required_packages, library, character.only = TRUE))
 enableWGCNAThreads()
 cat("  Packages loaded\n")
 cat("  WGCNA threads enabled\n\n")
+
+# ===== LOAD CHECKPOINTS =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/06_validated.RData")
 cat("Loaded validated expression data\n")
 
@@ -58,6 +78,13 @@ logCPM <- v_primary$E
 targets <- targets_primary
 
 cat("Expression matrix dimensions:", nrow(logCPM), "genes x", ncol(logCPM), "samples\n\n")
+
+# ===== GENE SELECTION FOR WGCNA =====
+
+cat("========================================\n")
+cat("SECTION 2: GENE SELECTION\n")
+cat("========================================\n\n")
+
 # Strategy: Use ANOVA to select genes with significant variation across conditions
 # This reduces noise and focuses on biologically relevant genes
 
@@ -135,8 +162,11 @@ if (length(extra_genes) > 0) {
 
 cat("\nFinal gene count for WGCNA:", length(genes_for_wgcna), "\n")
 
+# ===== PREPARE EXPRESSION MATRIX =====
 
 cat("\n========================================\n")
+cat("SECTION 3: PREPARE EXPRESSION DATA\n")
+cat("========================================\n")
 cat("  Time elapsed:", round(difftime(Sys.time(), script_start_time, units = "mins"), 1), "minutes\n\n")
 
 # Subset expression data for selected genes
@@ -180,8 +210,11 @@ abline(h = 100, col = "red", lty = 2)
 dev.off()
 cat("  Saved: sample_dendrogram.png\n")
 
+# ===== SOFT THRESHOLD SELECTION =====
 
 cat("\n========================================\n")
+cat("SECTION 4: SOFT THRESHOLD SELECTION\n")
+cat("========================================\n")
 cat("  Time elapsed:", round(difftime(Sys.time(), script_start_time, units = "mins"), 1), "minutes\n\n")
 
 cat("Calculating soft threshold power...\n")
@@ -260,13 +293,22 @@ abline(v = recommended_power, col = "blue", lty = 2)
 dev.off()
 cat("  Saved: soft_threshold_selection.png\n")
 
+# ===== NETWORK CONSTRUCTION =====
 
 cat("\n========================================\n")
+cat("SECTION 5: NETWORK CONSTRUCTION\n")
+cat("========================================\n")
 cat("  Time elapsed:", round(difftime(Sys.time(), script_start_time, units = "mins"), 1), "minutes\n\n")
 
 cat("Constructing gene co-expression network...\n")
 cat("Using signed hybrid network with bicor correlation\n")
+cat("----------------------------------------------\n")
 cat("  PROGRESS TRACKING:\n")
+cat("  - Step 1: Calculate correlations (may take 5-10 min)\n")
+cat("  - Step 2: Build TOM matrix (may take 5-15 min)\n")
+cat("  - Step 3: Hierarchical clustering\n")
+cat("  - Step 4: Module detection and merging\n")
+cat("----------------------------------------------\n")
 cat("  Network construction started at:", format(Sys.time(), "%H:%M:%S"), "\n")
 cat("  Processing", ncol(datExpr), "genes across", nrow(datExpr), "samples\n")
 cat("  Estimated time: 10-30 minutes\n\n")
@@ -300,8 +342,11 @@ net_end_time <- Sys.time()
 net_duration <- difftime(net_end_time, net_start_time, units = "mins")
 
 cat("\n\n========================================\n")
+cat("  NETWORK CONSTRUCTION COMPLETE!\n")
+cat("========================================\n")
 cat("  Finished at:", format(Sys.time(), "%H:%M:%S"), "\n")
 cat("  Duration:", round(net_duration, 1), "minutes\n")
+cat("========================================\n\n")
 
 # Module summary
 module_colors <- labels2colors(net$colors)
@@ -338,6 +383,7 @@ plotDendroAndColors(
 dev.off()
 cat("\nSaved: gene_dendrogram_modules.png\n")
 
+# ===== SAVE GENE SELECTION SUMMARY =====
 
 gene_selection_summary <- data.frame(
   Metric = c(
@@ -375,8 +421,11 @@ write.csv(gene_selection_summary,
           row.names = FALSE)
 cat("Saved: gene_selection_summary.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SAVE CHECKPOINT\n")
+cat("========================================\n")
 cat("  Time elapsed:", round(difftime(Sys.time(), script_start_time, units = "mins"), 1), "minutes\n\n")
 
 wgcna_prep <- list(
@@ -402,13 +451,17 @@ save(
 
 cat("Checkpoint saved: 18_WGCNA_prep.RData\n")
 
+# ===== SUMMARY =====
 
 script_end_time <- Sys.time()
 total_duration <- difftime(script_end_time, script_start_time, units = "mins")
 
 cat("\n================================================================\n")
+cat("  SCRIPT 18 COMPLETE: WGCNA NETWORK CONSTRUCTION\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("  TOTAL RUNTIME:", round(total_duration, 1), "minutes\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Genes selected for WGCNA:", ncol(datExpr), "\n")
@@ -426,3 +479,4 @@ cat("    - sample_dendrogram.png\n")
 cat("    - soft_threshold_selection.png\n")
 cat("    - gene_dendrogram_modules.png\n\n")
 
+cat("NEXT STEP: Run Script 19 for module eigengene analysis\n\n")

@@ -1,21 +1,39 @@
+# Script 22: GO Enrichment Analysis - clusterProfiler Implementation
+# =============================================================================
+# GmJAG1 Soybean RNA-Seq Analysis
 # Author: Bishal Tamang
 # Date: 2026-01-19
+# =============================================================================
+# Purpose: Perform GO enrichment analysis on JAG1 targets using clusterProfiler
 #          with proper TERM2GENE mapping from Phytozome annotations
+# =============================================================================
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 22: GO ENRICHMENT ANALYSIS (clusterProfiler)\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/functional", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/22_GO_enrichment", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 # Install if needed
 if (!requireNamespace("BiocManager", quietly = TRUE)) {
   install.packages("BiocManager")
@@ -39,6 +57,13 @@ library(tidyr)
 library(stringr)
 
 cat("  All packages loaded\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load JAG1 targets
 load("03_results/checkpoints/14_JAG1_targets.RData")
 cat("Loaded JAG1 target data\n")
@@ -55,8 +80,11 @@ cat("Background genes:", length(background_genes), "\n\n")
 jag1_targets <- target_table[target_table$Confidence_Tier != "Not_Target", ]
 cat("JAG1 targets:", nrow(jag1_targets), "\n")
 
+# ===== LOAD AND PARSE GO ANNOTATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 2: PARSE GO ANNOTATIONS\n")
+cat("========================================\n\n")
 
 # Load Phytozome annotation file
 annotation_file <- file.path(base_dir, "Phase1-Exploratory", "Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
@@ -116,6 +144,7 @@ term2gene <- unique(term2gene)
 
 cat("  After deduplication:", nrow(term2gene), "gene-GO associations\n")
 
+# ===== GET GO TERM NAMES FROM GO.db =====
 
 cat("\nRetrieving GO term names from GO.db...\n")
 
@@ -152,8 +181,11 @@ term2gene_bp <- term2gene[term2gene$GO_ID %in% bp_terms, ]
 term2gene_mf <- term2gene[term2gene$GO_ID %in% mf_terms, ]
 term2gene_cc <- term2gene[term2gene$GO_ID %in% cc_terms, ]
 
+# ===== DEFINE ENRICHMENT FUNCTION =====
 
 cat("\n========================================\n")
+cat("SECTION 3: GO ENRICHMENT ANALYSIS\n")
+cat("========================================\n\n")
 
 run_go_enrichment <- function(gene_list, universe, term2gene, term2name,
                                ontology_name = "GO", pval_cutoff = 0.05,
@@ -193,6 +225,7 @@ run_go_enrichment <- function(gene_list, universe, term2gene, term2name,
   return(result)
 }
 
+# ===== RUN ENRICHMENT FOR EACH TIER =====
 
 # Define gene lists by tier
 gold_genes <- jag1_targets$GeneID[jag1_targets$Confidence_Tier == "Gold"]
@@ -209,6 +242,8 @@ cat("Universe (expressed genes with GO):", length(universe_genes), "\n\n")
 # Store all results
 go_results <- list()
 
+# ----- ALL TARGETS -----
+cat("=== ALL TARGETS ===\n")
 cat("Total genes:", length(all_target_genes), "\n\n")
 
 go_results$all_BP <- run_go_enrichment(all_target_genes, universe_genes,
@@ -218,6 +253,7 @@ go_results$all_MF <- run_go_enrichment(all_target_genes, universe_genes,
 go_results$all_CC <- run_go_enrichment(all_target_genes, universe_genes,
                                         term2gene_cc, term2name, "CC")
 
+# ----- GOLD TIER -----
 cat("\n=== GOLD TIER ===\n")
 cat("Total genes:", length(gold_genes), "\n\n")
 
@@ -228,6 +264,7 @@ go_results$gold_MF <- run_go_enrichment(gold_genes, universe_genes,
 go_results$gold_CC <- run_go_enrichment(gold_genes, universe_genes,
                                          term2gene_cc, term2name, "CC")
 
+# ----- SILVER TIER -----
 cat("\n=== SILVER TIER ===\n")
 cat("Total genes:", length(silver_genes), "\n\n")
 
@@ -238,6 +275,7 @@ go_results$silver_MF <- run_go_enrichment(silver_genes, universe_genes,
 go_results$silver_CC <- run_go_enrichment(silver_genes, universe_genes,
                                            term2gene_cc, term2name, "CC")
 
+# ----- BRONZE TIER -----
 cat("\n=== BRONZE TIER ===\n")
 cat("Total genes:", length(bronze_genes), "\n\n")
 
@@ -248,8 +286,11 @@ go_results$bronze_MF <- run_go_enrichment(bronze_genes, universe_genes,
 go_results$bronze_CC <- run_go_enrichment(bronze_genes, universe_genes,
                                            term2gene_cc, term2name, "CC")
 
+# ===== SAVE RESULTS TO CSV =====
 
 cat("\n========================================\n")
+cat("SECTION 4: SAVE RESULTS\n")
+cat("========================================\n\n")
 
 # Function to save enrichment result
 save_enrichment <- function(result, filename) {
@@ -293,8 +334,11 @@ if (nrow(all_combined) > 0) {
   cat("  Saved: GO_all_targets_combined.csv (", nrow(all_combined), "terms )\n")
 }
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Publication theme
 theme_publication <- function(base_size = 12) {
@@ -313,6 +357,7 @@ theme_publication <- function(base_size = 12) {
     )
 }
 
+# ----- DOTPLOTS FOR ALL TARGETS -----
 
 if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) > 0) {
   cat("Creating BP dotplot...\n")
@@ -359,6 +404,7 @@ if (!is.null(go_results$all_CC) && nrow(go_results$all_CC@result) > 0) {
   cat("  Saved CC dotplot\n")
 }
 
+# ----- BARPLOTS -----
 
 if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) > 0) {
   cat("Creating BP barplot...\n")
@@ -373,6 +419,7 @@ if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) > 0) {
   cat("  Saved BP barplot\n")
 }
 
+# ----- CNETPLOT (Gene-Concept Network) -----
 
 if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) >= 5) {
   cat("Creating concept network plot...\n")
@@ -392,6 +439,7 @@ if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) >= 5) {
   })
 }
 
+# ----- UPSET PLOT -----
 
 if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) >= 3) {
   cat("Creating upset plot...\n")
@@ -408,6 +456,7 @@ if (!is.null(go_results$all_BP) && nrow(go_results$all_BP@result) >= 3) {
   })
 }
 
+# ----- TIER COMPARISON -----
 
 cat("\nCreating tier comparison...\n")
 
@@ -443,8 +492,11 @@ if (nrow(tier_comparison) > 0) {
   cat("  Saved tier comparison plot\n")
 }
 
+# ===== CREATE SUMMARY STATISTICS =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SUMMARY STATISTICS\n")
+cat("========================================\n\n")
 
 # Count significant terms per analysis
 summary_stats <- data.frame(
@@ -522,8 +574,11 @@ print(summary_stats)
 write.csv(summary_stats, "03_results/tables/functional/GO_enrichment_summary.csv", row.names = FALSE)
 cat("\nSaved: GO_enrichment_summary.csv\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 go_analysis <- list(
   go_results = go_results,
@@ -544,9 +599,13 @@ save(
 
 cat("Checkpoint saved: 22_GO_enrichment.RData\n")
 
+# ===== FINAL SUMMARY =====
 
 cat("\n================================================================\n")
+cat("  SCRIPT 22 COMPLETE: GO ENRICHMENT ANALYSIS\n")
+cat("================================================================\n")
 cat("  Completed:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("KEY RESULTS:\n")
 cat("  - Total GO terms in database:", length(unique(term2gene$GO_ID)), "\n")
@@ -566,3 +625,4 @@ cat("  - Checkpoint: 03_results/checkpoints/22_GO_enrichment.RData\n")
 cat("  - Tables: 03_results/tables/functional/GO_*.csv\n")
 cat("  - Figures: 03_results/figures/22_GO_enrichment/\n\n")
 
+cat("NEXT STEP: Run Figure 4A script for publication-quality visualization\n\n")

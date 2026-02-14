@@ -1,6 +1,7 @@
+# Script 34: KRP and TPR Homolog Analysis
 
 # Set base directory and working directory
-base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 setwd(base_dir)
 
 library(tidyverse)
@@ -9,7 +10,10 @@ library(limma)
 library(pheatmap)
 library(RColorBrewer)
 
+# -----------------------------------------------------------------------------
 # 1. Load Required Data
+# -----------------------------------------------------------------------------
+cat("=== Script 34: KRP and TPR Homolog Analysis ===\n\n")
 
 # Load normalized expression data (contains v_full, targets, design_full, etc.)
 load(file.path(base_dir, "03_results/checkpoints/05_normalized.RData"))
@@ -21,7 +25,9 @@ load(file.path(base_dir, "03_results/checkpoints/12_DE_organized.RData"))
 jag1_targets <- read_csv(file.path(base_dir, "03_results/tables/JAG1_targets/JAG1_targets_FINAL.csv"),
                          show_col_types = FALSE)
 
+# -----------------------------------------------------------------------------
 # 2. Define KRP and TPR Gene Families
+# -----------------------------------------------------------------------------
 
 # Soybean KRP homologs (ICK/KIP-related proteins - cell cycle inhibitors)
 # SOURCE: Guo et al. 2023, Frontiers in Plant Science
@@ -41,7 +47,7 @@ krp_genes <- tribble(
   "Glyma.08G354300",   "GmKRP3",   "AT5G48820 (KRP3)",   "Cyclin-dependent kinase inhibitor",
   "Glyma.20G198800",   "GmKRP4",   "AT2G32710 (KRP4)",   "Cell cycle inhibitor - JAG target in At",
   "Glyma.18G170800",   "GmKRP5",   "AT3G24810 (KRP5)",   "Cyclin-dependent kinase inhibitor",
-  "Glyma.02G133700",   "GmKRP6",   "AT3G61630 (KRP6)",   "Cyclin-dependent kinase inhibitor",
+  "Glyma.02G133700",   "GmKRP6",   "AT1G49620 (KRP7-related)",   "Cyclin-dependent kinase inhibitor",
   "Glyma.07G211300",   "GmKRP7",   "AT1G49620 (KRP7)",   "Cyclin-dependent kinase inhibitor"
 )
 
@@ -74,10 +80,13 @@ tpr_genes <- tribble(
 
 cat("Defined", nrow(krp_genes), "KRP genes and", nrow(tpr_genes), "TPR genes\n\n")
 
+# -----------------------------------------------------------------------------
 # 2b. Alternative Method: Search Annotation File
+# -----------------------------------------------------------------------------
 # This section provides an independent method to identify KRP and TPR genes
 # using the Phytozome annotation file, as a cross-validation approach
 
+cat("=== Alternative Gene Identification via Annotation File ===\n")
 
 # Path to Phytozome annotation file (used in Script 22 for GO analysis)
 annotation_file <- file.path(dirname(base_dir), "Phase1-Exploratory/Gmax_880_Wm82.a6.v1.P14.annotation_info.txt")
@@ -92,7 +101,9 @@ if(file.exists(annotation_file)) {
 
   cat("Annotation file contains", nrow(annotation), "entries\n")
 
+  # -------------------------------------------------------------------------
   # 2b.1 Search for KRP genes by Pfam domain (PF02234 = CDK inhibitor)
+  # -------------------------------------------------------------------------
   cat("\nSearching for KRP genes by Pfam domain PF02234...\n")
 
   krp_from_annotation <- annotation %>%
@@ -119,7 +130,9 @@ if(file.exists(annotation_file)) {
   cat("- Annotation only:", length(krp_anno_only),
       ifelse(length(krp_anno_only) > 0, paste0(" (", paste(krp_anno_only, collapse=", "), ")"), ""), "\n")
 
+  # -------------------------------------------------------------------------
   # 2b.2 Search for TPR genes by keyword (TOPLESS)
+  # -------------------------------------------------------------------------
   cat("\nSearching for TPR genes by 'TOPLESS' keyword...\n")
 
   tpr_from_annotation <- annotation %>%
@@ -181,7 +194,9 @@ if(file.exists(annotation_file)) {
 
 cat("\n")
 
+# -----------------------------------------------------------------------------
 # 3. Check Which Genes Are in Dataset
+# -----------------------------------------------------------------------------
 
 all_genes <- rownames(v_full$E)
 
@@ -199,7 +214,9 @@ tpr_genes <- tpr_genes %>%
 cat("TPR genes in dataset:", sum(tpr_genes$in_dataset), "/", nrow(tpr_genes), "\n")
 cat("Missing TPR genes:", paste(tpr_genes$gene_id[!tpr_genes$in_dataset], collapse = ", "), "\n\n")
 
+# -----------------------------------------------------------------------------
 # 4. Extract Expression Data
+# -----------------------------------------------------------------------------
 
 # Get expression for present genes
 krp_present <- krp_genes %>% filter(in_dataset)
@@ -216,7 +233,9 @@ if(nrow(tpr_present) > 0) {
   cat("TPR expression matrix:", nrow(tpr_expr), "genes x", ncol(tpr_expr), "samples\n")
 }
 
+# -----------------------------------------------------------------------------
 # 5. Check KRP Genes in JAG1 Targets
+# -----------------------------------------------------------------------------
 
 cat("\n=== KRP Genes in JAG1 Target List ===\n")
 
@@ -232,7 +251,9 @@ print(krp_target_info %>% select(gene_id, family, arabidopsis_ortholog,
 
 cat("\nKRP genes that are JAG1 targets:", sum(krp_target_info$is_JAG1_target, na.rm = TRUE), "\n")
 
+# -----------------------------------------------------------------------------
 # 6. Check TPR Genes in JAG1 Targets
+# -----------------------------------------------------------------------------
 
 cat("\n=== TPR Genes in JAG1 Target List ===\n")
 
@@ -248,7 +269,9 @@ print(tpr_target_info %>% select(gene_id, family, arabidopsis_ortholog,
 
 cat("\nTPR genes that are JAG1 targets:", sum(tpr_target_info$is_JAG1_target, na.rm = TRUE), "\n")
 
+# -----------------------------------------------------------------------------
 # 7. Expression Analysis by Line
+# -----------------------------------------------------------------------------
 
 cat("\n=== Expression by Line ===\n")
 
@@ -301,7 +324,9 @@ if(nrow(tpr_present) > 0) {
   print(tpr_summary)
 }
 
+# -----------------------------------------------------------------------------
 # 8. Temporal Expression Patterns
+# -----------------------------------------------------------------------------
 
 cat("\n=== Temporal Expression Patterns ===\n")
 
@@ -353,7 +378,9 @@ if(nrow(tpr_present) > 0) {
   cat("Saved TPR temporal expression plot\n")
 }
 
+# -----------------------------------------------------------------------------
 # 9. Heatmap of KRP and TPR Genes
+# -----------------------------------------------------------------------------
 
 cat("\n=== Creating Expression Heatmaps ===\n")
 
@@ -405,7 +432,9 @@ if(length(combined_genes) > 0) {
   cat("Saved combined heatmap\n")
 }
 
+# -----------------------------------------------------------------------------
 # 10. Statistical Testing
+# -----------------------------------------------------------------------------
 
 cat("\n=== Statistical Testing: Narrow vs Broad ===\n")
 
@@ -456,7 +485,9 @@ tpr_DE <- tpr_DE %>%
 cat("\nTPR Differential Expression Results:\n")
 print(tpr_DE %>% arrange(pvalue))
 
+# -----------------------------------------------------------------------------
 # 11. Summary and Interpretation
+# -----------------------------------------------------------------------------
 
 cat("\n")
 cat("=" %>% rep(70) %>% paste(collapse = ""))
@@ -492,7 +523,9 @@ cat("- Significantly UP in Narrow:", tpr_up_in_narrow, "\n")
 cat("- Significantly DOWN in Narrow:", tpr_down_in_narrow, "\n")
 cat("- In JAG1 target list:", sum(tpr_target_info$is_JAG1_target, na.rm = TRUE), "\n")
 
+# -----------------------------------------------------------------------------
 # 12. Save Results
+# -----------------------------------------------------------------------------
 
 dir.create(file.path(base_dir, "03_results/tables/mechanistic"), showWarnings = FALSE, recursive = TRUE)
 
@@ -548,14 +581,18 @@ if(!is.null(annotation_search_results)) {
 
 cat("\nResults saved to 03_results/tables/mechanistic/\n")
 
+# -----------------------------------------------------------------------------
 # 13. Save Checkpoint
+# -----------------------------------------------------------------------------
 
 save(krp_genes, tpr_genes, krp_present, tpr_present,
      krp_DE, tpr_DE, krp_target_info, tpr_target_info,
      krp_summary, tpr_summary, annotation_search_results,
      file = file.path(base_dir, "03_results/checkpoints/34_KRP_TPR_analysis.RData"))
 
+# -----------------------------------------------------------------------------
 # 14. Gene Identification Method Documentation
+# -----------------------------------------------------------------------------
 
 cat("\n=== GENE IDENTIFICATION METHODS DOCUMENTATION ===\n")
 cat("\nKRP GENES:\n")

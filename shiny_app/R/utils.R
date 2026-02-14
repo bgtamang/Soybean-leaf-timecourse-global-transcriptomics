@@ -44,14 +44,14 @@ safe_load_rds <- function(file_path, default = NULL) {
   })
 }
 
-# Color functions
+# Color functions (must match global.R palettes)
 get_tier_color <- function(tier) {
-  colors <- c("Gold" = "#FFD700", "Silver" = "#C0C0C0", "Bronze" = "#CD7F32")
+  colors <- c("Gold" = "#D4AF37", "Silver" = "#8E8E8E", "Bronze" = "#CD7F32")
   colors[tier]
 }
 
 get_leaftype_color <- function(leaf_type) {
-  colors <- c("Broad" = "#27AE60", "Narrow" = "#E74C3C")
+  colors <- c("Broad" = "#2E86AB", "Narrow" = "#E94F37")
   colors[leaf_type]
 }
 

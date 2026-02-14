@@ -60,7 +60,7 @@ home_ui <- function(id) {
       )),
       column(3, value_box(
         title = "WGCNA Modules",
-        value = "21",
+        value = textOutput(ns("n_modules")),
         theme = "warning",
         showcase = icon("project-diagram")
       ))
@@ -116,7 +116,7 @@ home_ui <- function(id) {
               ),
               column(4,
                 h5(icon("bullseye"), " JAG1 Targets"),
-                p("Browse 1,511 identified JAG1 target genes with tier classification."),
+                p("Browse identified JAG1 target genes with tier classification."),
                 actionButton(ns("go_jag1"), "View Targets", class = "btn-outline-success btn-sm")
               ),
               column(4,
@@ -162,6 +162,10 @@ home_server <- function(id, parent_session = NULL) {
 
     output$n_targets <- renderText({
       format(project_info$n_targets, big.mark = ",")
+    })
+
+    output$n_modules <- renderText({
+      project_info$n_modules
     })
 
     output$tier_plot <- renderPlot({

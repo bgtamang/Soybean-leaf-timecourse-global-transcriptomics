@@ -1,11 +1,11 @@
-# Regenerate Dashboard Data from Gene-Level Expression
+# Regenerate Dashboard Data from Gene-Level Expression (Phase3)
 # This script updates the dashboard data to use gene-level (not transcript-level) expression
 # Run this script from the GmJAG1_Dashboard directory
 
 library(dplyr)
 
 # Set paths
-base_dir <- dirname(getwd())  # Phase2-Refined-Analysis
+base_dir <- dirname(getwd())  # Phase3-Refined-Analysis
 checkpoint_dir <- file.path(base_dir, "03_results", "checkpoints")
 data_dir <- "data"
 

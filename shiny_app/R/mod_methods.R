@@ -46,9 +46,9 @@ methods_ui <- function(id) {
             p("JAG1 targets were identified through a tiered approach based on consistency ",
               "across pairwise genotype comparisons at TP0:"),
             tags$ul(
-              tags$li(tags$b("Gold:"), " DE in all 4 pairwise comparisons (74 genes)"),
-              tags$li(tags$b("Silver:"), " DE in 3 of 4 comparisons (65 genes)"),
-              tags$li(tags$b("Bronze:"), " DE in 2+ comparisons or pooled contrast (1,372 genes)")
+              tags$li(tags$b("Gold:"), " DE in all 4 pairwise comparisons (76 genes)"),
+              tags$li(tags$b("Silver:"), " DE in 3 of 4 comparisons (69 genes)"),
+              tags$li(tags$b("Bronze:"), " DE in 2+ comparisons or pooled contrast (1,422 genes)")
             ),
             h5("5. Co-expression Analysis"),
             p("WGCNA was used to identify co-expression modules. 21 modules were identified, ",
@@ -64,7 +64,7 @@ methods_ui <- function(id) {
           card_header("Software Versions"),
           card_body(
             tags$table(class = "table table-sm",
-              tags$tr(tags$td("R"), tags$td("4.4.0")),
+              tags$tr(tags$td("R"), tags$td("4.5.2")),
               tags$tr(tags$td("Salmon"), tags$td("1.10.0")),
               tags$tr(tags$td("tximport"), tags$td("1.30.0")),
               tags$tr(tags$td("edgeR"), tags$td("4.0.16")),

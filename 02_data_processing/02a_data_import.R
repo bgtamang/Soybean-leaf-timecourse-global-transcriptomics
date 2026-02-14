@@ -1,23 +1,36 @@
+# Script 01: Data Import
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 01: DATA IMPORT\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 # Define base directory
 # MODIFY THIS PATH if running on a different machine
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
 
 # Set working directory to Phase 2
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/checkpoints", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/tables", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/01_import", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 # List of required packages
 required_packages <- c(
   "tximport",       # For Salmon import (if needed)
@@ -41,6 +54,7 @@ if (length(missing_packages) > 0) {
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  All packages loaded successfully\n\n")
 
+# ===== PARAMETERS =====
 
 # Define key parameters for the analysis
 PARAMS <- list(
@@ -60,6 +74,14 @@ cat("  JAG1 gene ID:", PARAMS$JAG1, "\n")
 cat("  JAG2 gene ID:", PARAMS$JAG2, "\n")
 cat("  Minimum count threshold:", PARAMS$min_count, "\n")
 cat("  Minimum samples:", PARAMS$min_samples, "\n\n")
+
+# ===== LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOADING RAW DATA\n")
+cat("========================================\n\n")
+
+# ===== INPUT DATA LOCATION =====
 # All input data is stored in 01_data/ for self-contained analysis
 data_dir <- "01_data"
 
@@ -90,6 +112,7 @@ if (file.exists(salmon_file)) {
        "  OR ", backup_data_file)
 }
 
+# ===== EXAMINE LOADED DATA =====
 
 cat("\nExamining loaded objects...\n")
 
@@ -100,6 +123,13 @@ loaded_objects <- loaded_objects[!loaded_objects %in% c("base_dir", "salmon_file
                                                          "missing_packages", "PARAMS")]
 
 cat("  Loaded objects:", paste(loaded_objects, collapse = ", "), "\n\n")
+
+# ===== EXTRACT COUNT MATRIX =====
+
+cat("========================================\n")
+cat("SECTION 2: EXTRACTING COUNT MATRIX\n")
+cat("========================================\n\n")
+
 # The Salmon output should contain counts - find them
 # Common object names from tximport: txi, tx.all, salmon_data, counts, etc.
 
@@ -172,6 +202,7 @@ if (!exists("raw_counts")) {
 # Ensure it's a matrix
 raw_counts <- as.matrix(raw_counts)
 
+# ===== FIX SAMPLE NAMES =====
 # Sample names have "salmo" prefix that needs to be removed to match metadata
 
 cat("\nFixing sample names...\n")
@@ -182,10 +213,17 @@ colnames(raw_counts) <- fixed_names
 cat("  Original:", head(original_names, 3), "...\n")
 cat("  Fixed:", head(fixed_names, 3), "...\n")
 
-# Data is at transcript level (Glyma.20G116200.1, .3, etc.)
-# Need to sum counts across transcripts for each gene
+# Also fix names in tx.all so summarizeToGene output has clean names
+colnames(tx.all$counts)    <- fixed_names
+colnames(tx.all$abundance) <- fixed_names
+colnames(tx.all$length)    <- fixed_names
 
-cat("\nSummarizing transcripts to gene level...\n")
+# ===== SUMMARIZE TRANSCRIPTS TO GENES =====
+# Data is at transcript level (Glyma.20G116200.1, .3, etc.)
+# Use tximport::summarizeToGene with lengthScaledTPM for proper length-bias correction
+# (Phase2 used naive rowsum — Phase3 uses the correct method)
+
+cat("\nSummarizing transcripts to gene level (lengthScaledTPM)...\n")
 cat("  Transcripts before:", nrow(raw_counts), "\n")
 
 # Extract gene ID by removing transcript suffix (last .N)
@@ -194,23 +232,30 @@ gene_ids <- sub("\\.[0-9]+$", "", transcript_ids)
 
 cat("  Example: ", transcript_ids[1], " -> ", gene_ids[1], "\n", sep = "")
 
-# Sum counts by gene
-unique_genes <- unique(gene_ids)
-cat("  Unique genes:", length(unique_genes), "\n")
+# Create tx2gene mapping for tximport
+tx2gene <- data.frame(
+  TXNAME = transcript_ids,
+  GENEID = gene_ids,
+  stringsAsFactors = FALSE
+)
 
-# Create gene-level count matrix by summing transcripts
-gene_counts <- matrix(0, nrow = length(unique_genes), ncol = ncol(raw_counts))
-rownames(gene_counts) <- unique_genes
-colnames(gene_counts) <- colnames(raw_counts)
+cat("  Unique genes:", length(unique(gene_ids)), "\n")
 
-# Use rowsum for efficient aggregation
-gene_counts <- rowsum(raw_counts, gene_ids)
+# Use tximport summarizeToGene with lengthScaledTPM
+# This properly accounts for transcript length differences when aggregating
+# Requires the full tx.all object (counts, abundance, length) from Salmon
+txi_gene <- summarizeToGene(tx.all, tx2gene = tx2gene,
+                            countsFromAbundance = "lengthScaledTPM")
+
+gene_counts <- txi_gene$counts
 
 cat("  Genes after summarization:", nrow(gene_counts), "\n")
+cat("  Method: tximport lengthScaledTPM (Soneson et al. 2015)\n")
 
 # Replace transcript-level with gene-level
 raw_counts <- gene_counts
 
+# ===== VERIFY COUNT MATRIX =====
 
 cat("\nCount matrix dimensions:\n")
 cat("  Genes:", nrow(raw_counts), "\n")
@@ -238,8 +283,11 @@ if (PARAMS$JAG1 %in% rownames(raw_counts)) {
   }
 }
 
+# ===== BASIC STATISTICS =====
 
 cat("\n========================================\n")
+cat("SECTION 3: BASIC STATISTICS\n")
+cat("========================================\n\n")
 
 # Total counts per sample
 lib_sizes <- colSums(raw_counts)
@@ -265,6 +313,7 @@ cat("  Median:", median(nonzero_counts), "\n")
 cat("  Mean:", round(mean(nonzero_counts), 2), "\n")
 cat("  Max:", max(nonzero_counts), "\n")
 
+# ===== CREATE SUMMARY TABLE =====
 
 # Summary by sample
 sample_summary <- data.frame(
@@ -282,8 +331,11 @@ write.csv(sample_summary,
           row.names = FALSE)
 cat("\nSaved: 03_results/tables/raw_counts_summary.csv\n")
 
+# ===== VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 4: VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: Library sizes
 cat("Creating library size plot...\n")
@@ -350,8 +402,11 @@ boxplot(log_counts,
 dev.off()
 cat("  Saved: 03_results/figures/01_import/count_distribution.png\n")
 
+# ===== SAVE CHECKPOINT =====
 
 cat("\n========================================\n")
+cat("SECTION 5: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
 
 # Save checkpoint with all important objects
 save(
@@ -364,15 +419,21 @@ save(
 cat("Saved checkpoint: 03_results/checkpoints/01_data_imported.RData\n")
 cat("  Contains: raw_counts, sample_summary, PARAMS\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 # Print session info for reproducibility
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 01: DATA IMPORT - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -381,3 +442,5 @@ cat("    - Samples:", ncol(raw_counts), "\n")
 cat("    - Mean library size:", format(round(mean(lib_sizes)), big.mark = ","), "\n")
 cat("    - JAG1 present:", PARAMS$JAG1 %in% rownames(raw_counts), "\n")
 cat("\n")
+cat("  Next: Run 02_sample_metadata.R\n")
+cat("================================================================\n")

@@ -1,21 +1,29 @@
+# Script 25a: Promoter Window Validation
 # Phase 1: Validate motif distribution using published gene lists from Huang et al. and Wang et al.
 # Using OUR genome reference (Wm82.a6.v1) to confirm consistency
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 25a: PROMOTER WINDOW VALIDATION\n")
 cat("  Phase 1: Validate using published gene lists\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/tables/promoter/validation", recursive = TRUE, showWarnings = FALSE)
 dir.create("03_results/figures/25a_promoter_validation", recursive = TRUE, showWarnings = FALSE)
 
+# ===== LOAD PACKAGES =====
 cat("Loading packages...\n")
 library(Biostrings)
 library(GenomicRanges)
@@ -25,8 +33,10 @@ library(ggplot2)
 library(dplyr)
 library(tidyr)
 
+# ===== PARAMETERS =====
 PROMOTER_LENGTH <- 3000  # Using 3000 bp to capture 100% of promoter binding sites
 
+# ===== DEFINE MOTIFS =====
 motifs <- list(
   M0 = list(seq = "GTTGGA", source = "ChIP-seq (Huang 2021)", core = TRUE),
   M1 = list(seq = "ACGCCACT", source = "DAP-seq (Wang 2024)", core = FALSE),
@@ -38,8 +48,10 @@ for (m in names(motifs)) {
   cat(sprintf("  %s: %s (%s)\n", m, motifs[[m]]$seq, motifs[[m]]$source))
 }
 
+# ===== LOAD GENOME AND ANNOTATION =====
 cat("\n========================================\n")
 cat("LOADING GENOME AND ANNOTATION\n")
+cat("========================================\n\n")
 
 genome_file <- "01_data/genome/Gmax_880_v6.0.fa"
 gff_file <- "01_data/genome/Gmax_880_Wm82.a6.v1.gene.gff3"
@@ -53,7 +65,10 @@ gff <- import(gff_file)
 genes <- gff[gff$type == "gene"]
 cat("  Genes:", length(genes), "\n\n")
 
+# ===== LOAD PUBLISHED GENE LISTS =====
+cat("========================================\n")
 cat("LOADING PUBLISHED GENE LISTS\n")
+cat("========================================\n\n")
 
 # --- Huang et al. 2021 ChIP-seq ---
 huang_file <- file.path(base_dir, "Huang et al 2021 Chip Seq/1-s2.0-S0888754320320723-mmc2.xlsx")
@@ -88,6 +103,7 @@ wang_data$Gene_ID <- gsub("_Promoter.*", "", wang_data$Promoter_Location)
 wang_genes <- unique(wang_data$Gene_ID)
 cat("  Wang et al. genes with motifs:", length(wang_genes), "\n\n")
 
+# ===== FUNCTION TO EXTRACT PROMOTER =====
 extract_promoter <- function(gene_id, genes_gr, genome, upstream = 2000) {
   # Find gene - try multiple matching strategies
   gene_match <- genes_gr[grepl(paste0("^", gene_id), genes_gr$ID) |
@@ -130,6 +146,7 @@ extract_promoter <- function(gene_id, genes_gr, genome, upstream = 2000) {
   ))
 }
 
+# ===== FUNCTION TO FIND MOTIF POSITIONS =====
 find_motif_positions <- function(sequence, motif) {
   seq_obj <- DNAString(sequence)
   motif_obj <- DNAString(motif)
@@ -156,7 +173,10 @@ find_motif_positions <- function(sequence, motif) {
   return(distance_from_tss)
 }
 
+# ===== PHASE 1A: VALIDATE HUANG ET AL. GENES =====
+cat("========================================\n")
 cat("PHASE 1A: VALIDATING HUANG ET AL. GENES\n")
+cat("========================================\n\n")
 
 cat("Extracting promoters for Huang et al. promoter-bound genes...\n")
 cat("Using", PROMOTER_LENGTH, "bp upstream window\n\n")
@@ -196,8 +216,10 @@ cat("\n\nHuang et al. validation results:\n")
 cat("  Promoters extracted:", length(huang_promoters), "/", length(huang_promoter_genes), "\n")
 cat("  Total motif occurrences found:", nrow(huang_results), "\n")
 
+# ===== PHASE 1B: VALIDATE WANG ET AL. GENES =====
 cat("\n========================================\n")
 cat("PHASE 1B: VALIDATING WANG ET AL. GENES\n")
+cat("========================================\n\n")
 
 cat("Extracting promoters for Wang et al. genes...\n")
 
@@ -236,10 +258,13 @@ cat("\n\nWang et al. validation results:\n")
 cat("  Promoters extracted:", length(wang_promoters), "/", length(wang_genes), "\n")
 cat("  Total motif occurrences found:", nrow(wang_results), "\n")
 
+# ===== COMBINE RESULTS =====
 all_results <- rbind(huang_results, wang_results)
 
+# ===== ANALYZE DISTRIBUTION =====
 cat("\n========================================\n")
 cat("POSITION DISTRIBUTION ANALYSIS\n")
+cat("========================================\n\n")
 
 # Summary by source and motif
 distribution_summary <- all_results %>%
@@ -279,8 +304,10 @@ overall_summary <- all_results %>%
 cat("\n\nOverall distribution by source:\n\n")
 print(as.data.frame(overall_summary))
 
+# ===== VISUALIZATIONS =====
 cat("\n========================================\n")
 cat("GENERATING VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # Plot 1: Distribution histogram by source
 png("03_results/figures/25a_promoter_validation/position_distribution_by_source.png",
@@ -367,8 +394,10 @@ all_results %>%
 dev.off()
 cat("Saved: cumulative_distribution.png\n")
 
+# ===== SAVE RESULTS =====
 cat("\n========================================\n")
 cat("SAVING RESULTS\n")
+cat("========================================\n\n")
 
 write.csv(all_results,
           "03_results/tables/promoter/validation/motif_positions_validation.csv",
@@ -394,9 +423,13 @@ save(
 )
 cat("Saved: 25a_promoter_validation.RData\n")
 
+# ===== FINAL SUMMARY =====
 cat("\n================================================================\n")
+cat("  SCRIPT 25a COMPLETE: PROMOTER WINDOW VALIDATION\n")
+cat("================================================================\n\n")
 
 cat("VALIDATION SUMMARY:\n")
+cat("-------------------\n")
 cat("Genome reference: Wm82.a6.v1\n")
 cat("Promoter window tested:", PROMOTER_LENGTH, "bp\n\n")
 
@@ -431,3 +464,4 @@ cat("  - 03_results/tables/promoter/validation/*.csv\n")
 cat("  - 03_results/figures/25a_promoter_validation/*.png\n")
 cat("  - 03_results/checkpoints/25a_promoter_validation.RData\n\n")
 
+cat("NEXT: If validation successful, run Phase 2 on JAG1 targets\n")

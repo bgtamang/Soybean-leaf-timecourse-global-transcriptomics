@@ -1,17 +1,30 @@
+# Script 07: PCA and Clustering
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 07: PCA AND CLUSTERING\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/07_PCA", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",
   "limma",
@@ -44,6 +57,13 @@ invisible(lapply(required_packages, function(p) {
   tryCatch(library(p, character.only = TRUE), error = function(e) NULL)
 }))
 cat("  Packages loaded\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/06_validated.RData")
 cat("Loaded checkpoint from script 06\n")
 cat("  Using PRIMARY dataset (all 60 samples)\n\n")
@@ -54,6 +74,7 @@ targets <- targets_primary
 
 cat("Expression matrix:", nrow(expr_mat), "genes x", ncol(expr_mat), "samples\n\n")
 
+# ===== DEFINE COLORS =====
 
 # Consistent color scheme
 batch_colors <- c("2021" = "#E41A1C", "2022" = "#377EB8")
@@ -62,6 +83,13 @@ line_colors <- c("PI532462A" = "#1B9E77", "LD112170" = "#D95F02",
                  "PI612713B" = "#7570B3", "PI547745" = "#E7298A")
 tp_colors <- c("TP0" = "#FFFFB2", "TP1" = "#FECC5C", "TP2" = "#FD8D3C",
                "TP3" = "#F03B20", "TP4" = "#BD0026")
+
+# ===== SECTION 2: PCA ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 2: PCA ANALYSIS\n")
+cat("========================================\n\n")
+
 # Perform PCA
 cat("Running PCA...\n")
 pca_result <- prcomp(t(expr_mat), scale. = TRUE, center = TRUE)
@@ -91,8 +119,11 @@ pca_df <- data.frame(
   Group = targets$Group
 )
 
+# ===== SECTION 3: PCA VISUALIZATIONS =====
 
 cat("\n========================================\n")
+cat("SECTION 3: PCA VISUALIZATIONS\n")
+cat("========================================\n\n")
 
 # --- Plot 1: PC1 vs PC2 multi-panel ---
 cat("Creating main PCA plots...\n")
@@ -226,8 +257,11 @@ text(8, 82, "80% threshold", cex = 0.9)
 dev.off()
 cat("  Saved: 03_results/figures/07_PCA/PCA_scree.png\n")
 
+# ===== SECTION 4: HIERARCHICAL CLUSTERING =====
 
 cat("\n========================================\n")
+cat("SECTION 4: HIERARCHICAL CLUSTERING\n")
+cat("========================================\n\n")
 
 # Calculate sample distances
 cat("Calculating sample distances...\n")
@@ -296,8 +330,11 @@ pheatmap(sample_cor,
 dev.off()
 cat("  Saved: 03_results/figures/07_PCA/correlation_heatmap.png\n")
 
+# ===== SECTION 5: PCA LOADINGS =====
 
 cat("\n========================================\n")
+cat("SECTION 5: PCA LOADINGS\n")
+cat("========================================\n\n")
 
 # Get top genes contributing to each PC
 cat("Identifying top genes for each PC...\n")
@@ -332,8 +369,11 @@ if (PARAMS$JAG1 %in% rownames(loadings)) {
   cat("  JAG1 rank - PC1:", jag1_rank_pc1, ", PC2:", jag1_rank_pc2, "\n")
 }
 
+# ===== SECTION 6: SUMMARY =====
 
 cat("\n========================================\n")
+cat("SECTION 6: SUMMARY\n")
+cat("========================================\n\n")
 
 # Create summary table
 pca_summary <- data.frame(
@@ -353,14 +393,20 @@ cat("  - PC1 explains", round(var_explained[1], 1), "% of variance\n")
 cat("  - First 5 PCs explain", round(cum_var[5], 1), "% of variance\n")
 cat("  - Samples cluster primarily by: (check plots)\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 07: PCA AND CLUSTERING - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Outputs:\n")
@@ -368,3 +414,5 @@ cat("    - PCA plots: 07_PCA/*.png\n")
 cat("    - Loadings: PCA_loadings.csv\n")
 cat("    - Summary: PCA_summary.csv\n")
 cat("\n")
+cat("  Next: Run 08_variance_analysis.R\n")
+cat("================================================================\n")

@@ -1,18 +1,31 @@
+# Script 04: Batch Correction
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 04: BATCH CORRECTION\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 # Define base directory
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directory
 dir.create("03_results/figures/04_batch", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "edgeR",           # For DGEList
   "sva",             # For ComBat-seq
@@ -36,11 +49,25 @@ if (length(missing_packages) > 0) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  All packages loaded successfully\n\n")
+
+# ===== LOAD CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 load("03_results/checkpoints/03_QC_complete.RData")
 cat("Loaded checkpoint from script 03\n")
 cat("  Objects: raw_counts, dge_filtered, logCPM, targets, sample_cor\n")
 cat("  Samples:", ncol(raw_counts), "\n")
 cat("  Genes (filtered):", nrow(dge_filtered), "\n\n")
+
+# ===== BATCH STRUCTURE ANALYSIS =====
+
+cat("========================================\n")
+cat("SECTION 2: BATCH STRUCTURE\n")
+cat("========================================\n\n")
+
 cat("Batch composition:\n")
 print(table(targets$Batch, targets$Timepoint))
 
@@ -55,6 +82,13 @@ cat("  - Standard batch correction would remove TP0-specific genes\n")
 cat("  - We will use TWO approaches:\n")
 cat("    1. Primary: ComBat-seq with biological covariates\n")
 cat("    2. Sensitivity: Analysis excluding TP0 (no batch effect)\n\n")
+
+# ===== VISUALIZE BATCH EFFECTS BEFORE CORRECTION =====
+
+cat("========================================\n")
+cat("SECTION 3: PRE-CORRECTION VISUALIZATION\n")
+cat("========================================\n\n")
+
 # Colors
 batch_colors <- c("2021" = "#E41A1C", "2022" = "#377EB8")
 tp_colors <- brewer.pal(5, "YlOrRd")
@@ -122,8 +156,11 @@ legend("topright", legend = names(tp_colors), col = tp_colors, pch = 19, cex = 1
 dev.off()
 cat("  Saved: 03_results/figures/04_batch/PCA_before_correction.png\n")
 
+# ===== COMBAT-SEQ BATCH CORRECTION =====
 
 cat("\n========================================\n")
+cat("SECTION 4: COMBAT-SEQ BATCH CORRECTION\n")
+cat("========================================\n\n")
 
 cat("Strategy: Use ComBat-seq with biological covariates\n")
 cat("  - Include Timepoint and Leaf_type as covariates\n")
@@ -162,6 +199,7 @@ if (any(counts_corrected < 0)) {
   counts_corrected[counts_corrected < 0] <- 0
 }
 
+# ===== CREATE CORRECTED DGELIST =====
 
 cat("Creating corrected DGEList...\n")
 
@@ -176,6 +214,13 @@ dge_corrected <- calcNormFactors(dge_corrected, method = "TMM")
 logCPM_corrected <- cpm(dge_corrected, log = TRUE, prior.count = 2)
 
 cat("  DGEList created with TMM normalization\n\n")
+
+# ===== VISUALIZE AFTER CORRECTION =====
+
+cat("========================================\n")
+cat("SECTION 5: POST-CORRECTION VISUALIZATION\n")
+cat("========================================\n\n")
+
 # --- Plot 2: PCA after correction ---
 cat("Creating PCA plot (after correction)...\n")
 
@@ -350,8 +395,11 @@ cat("    Mean IQR:", round(mean(rle_stats_after$IQR), 4), "\n")
 cat("  Improvement:\n")
 cat("    Median SD reduction:", round((1 - sd(rle_stats_after$Median)/sd(rle_stats_before$Median)) * 100, 1), "%\n\n")
 
+# ===== QUANTIFY BATCH EFFECT REDUCTION =====
 
 cat("\n========================================\n")
+cat("SECTION 6: BATCH EFFECT QUANTIFICATION\n")
+cat("========================================\n\n")
 
 # Calculate variance explained by batch before and after
 
@@ -400,9 +448,12 @@ cat("    Before: Mean R² =", round(mean(tp_rsq_before), 4), "\n")
 cat("    After: Mean R² =", round(mean(tp_rsq_after), 4), "\n")
 cat("    Change:", round((mean(tp_rsq_after)/mean(tp_rsq_before) - 1) * 100, 1), "%\n")
 
+# ===== PVCA ANALYSIS =====
 # Principal Variance Component Analysis for precise variance decomposition
 
 cat("\n========================================\n")
+cat("SECTION 6b: PVCA ANALYSIS (Variance Decomposition)\n")
+cat("========================================\n\n")
 
 cat("Running PVCA for precise variance attribution...\n")
 cat("  This provides exact percentages for manuscript\n\n")
@@ -545,8 +596,11 @@ text(x = bp2, y = pvcaObj_after$dat + 0.02,
 dev.off()
 cat("  Saved: 03_results/figures/04_batch/PVCA_comparison.png\n\n")
 
+# ===== SUMMARY TABLE =====
 
 cat("\n========================================\n")
+cat("SECTION 7: SUMMARY\n")
+cat("========================================\n\n")
 
 # Create summary table
 batch_summary <- data.frame(
@@ -573,10 +627,14 @@ cat("Saved: 03_results/tables/batch_correction_summary.csv\n\n")
 
 print(batch_summary)
 
+# ===== IMPORTANT CAVEATS =====
 
 cat("\n========================================\n")
+cat("SECTION 8: CAVEATS & RECOMMENDATIONS\n")
+cat("========================================\n\n")
 
 cat("IMPORTANT CAVEATS:\n")
+cat("-----------------\n")
 cat("1. Batch and TP0 are COMPLETELY CONFOUNDED\n")
 cat("   - Cannot separate batch effects from true TP0 biology\n")
 cat("   - Any TP0-specific signal may be partially removed\n\n")
@@ -590,6 +648,13 @@ cat("3. Interpretation guidance:\n")
 cat("   - TP0 vs other timepoints: Results should be interpreted cautiously\n")
 cat("   - Within TP1-TP4: No batch confounding, results are reliable\n")
 cat("   - Leaf-type comparisons at TP0: May have reduced power\n\n")
+
+# ===== CREATE NO-TP0 SUBSET =====
+
+cat("========================================\n")
+cat("SECTION 9: CREATE TP1-TP4 SUBSET\n")
+cat("========================================\n\n")
+
 cat("Creating batch-free TP1-TP4 subset for sensitivity analysis...\n")
 
 # Subset to TP1-TP4 (no batch effect)
@@ -606,6 +671,13 @@ dge_tp1_4 <- calcNormFactors(dge_tp1_4, method = "TMM")
 
 cat("  Created: dge_tp1_4, targets_tp1_4, logCPM_tp1_4\n")
 cat("  These have NO batch effect (all from 2021)\n\n")
+
+# ===== SAVE CHECKPOINT =====
+
+cat("========================================\n")
+cat("SECTION 10: SAVE CHECKPOINT\n")
+cat("========================================\n\n")
+
 # Save all objects needed for downstream analysis
 save(
   # Original filtered data (for reference)
@@ -645,14 +717,20 @@ cat("    - Corrected: counts_corrected, dge_corrected, logCPM_corrected\n")
 cat("    - TP1-4 subset: dge_tp1_4, targets_tp1_4, logCPM_tp1_4\n")
 cat("    - Metadata: targets, sample_cor, PARAMS, QC_PARAMS\n")
 
+# ===== SESSION INFO =====
 
 cat("\n========================================\n")
 cat("SESSION INFO\n")
+cat("========================================\n\n")
 
 print(sessionInfo())
 
+# ===== COMPLETION =====
 
 cat("\n")
+cat("================================================================\n")
+cat("  SCRIPT 04: BATCH CORRECTION - COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
 cat("\n")
 cat("  Summary:\n")
@@ -665,3 +743,5 @@ cat("  IMPORTANT: Batch and TP0 are confounded!\n")
 cat("    - Use corrected data for primary analysis\n")
 cat("    - Run sensitivity analyses as documented\n")
 cat("\n")
+cat("  Next: Run 05_normalization.R\n")
+cat("================================================================\n")

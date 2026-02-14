@@ -1,4 +1,8 @@
 #!/usr/bin/env Rscript
+# ==============================================================================
+# Script 37a: Hormone Pathway Enrichment in DE Genes (TP0)
+# ==============================================================================
+# Purpose: Test whether differentially expressed genes between narrow and broad
 #          leaves are enriched for plant hormone pathway genes
 #
 # Question: Are hormone pathways altered in leaf shape differences?
@@ -20,16 +24,23 @@
 # KEGG Reference:
 #   - Pathway: gmx04075 (Plant hormone signal transduction - Glycine max)
 #   - URL: https://www.kegg.jp/pathway/gmx04075
+# ==============================================================================
 
+cat("=======================================================================\n")
 cat("Script 37a: Hormone Pathway Enrichment in DE Genes (TP0)\n")
+cat("=======================================================================\n\n")
 
+# ------------------------------------------------------------------------------
 # 0. Set Working Directory to Project Root
-script_dir <- dirname(rstudioapi::getSourceEditorContext()$path)
+# ------------------------------------------------------------------------------
+script_dir <- tryCatch(dirname(rstudioapi::getSourceEditorContext()$path), error = function(e) file.path(getwd(), "02_scripts"))
 project_root <- dirname(script_dir)
 setwd(project_root)
 cat("Working directory:", getwd(), "\n\n")
 
+# ------------------------------------------------------------------------------
 # 1. Setup and Load Dependencies
+# ------------------------------------------------------------------------------
 cat("1. Loading packages...\n")
 
 suppressPackageStartupMessages({
@@ -40,7 +51,9 @@ suppressPackageStartupMessages({
 dir.create("03_results/tables/hormone_analysis", showWarnings = FALSE, recursive = TRUE)
 dir.create("03_results/figures/37a_hormone_DE", showWarnings = FALSE, recursive = TRUE)
 
+# ------------------------------------------------------------------------------
 # 2. Parse KEGG Pathway File (gmx04075.txt)
+# ------------------------------------------------------------------------------
 cat("\n2. Parsing KEGG pathway file...\n")
 
 kegg_file <- "01_data/gmx04075.txt"
@@ -91,7 +104,9 @@ kegg_ko_ids <- kegg_genes %>%
 
 cat("   Unique KO IDs in pathway:", length(kegg_ko_ids), "\n")
 
+# ------------------------------------------------------------------------------
 # 3. Load Phytozome Annotation File
+# ------------------------------------------------------------------------------
 cat("\n3. Loading Phytozome annotation file...\n")
 
 annotation_file <- "01_data/Gmax_880_Wm82.a6.v1.P14.annotation_info.txt"
@@ -126,7 +141,9 @@ gene_annotations <- annotations %>%
 cat("   Collapsed to", nrow(gene_annotations), "unique genes\n")
 cat("   Genes with KO annotation:", sum(!is.na(gene_annotations$KO)), "\n")
 
+# ------------------------------------------------------------------------------
 # 4. Map KEGG Hormone Pathway to Glyma IDs via KO
+# ------------------------------------------------------------------------------
 cat("\n4. Mapping KEGG pathway genes to Glyma IDs via KO...\n")
 
 find_genes_with_ko <- function(annotations_df, ko_ids) {
@@ -154,7 +171,9 @@ hormone_gene_details <- gene_annotations %>%
   ) %>%
   ungroup()
 
+# ------------------------------------------------------------------------------
 # 5. Load DE Genes and Background
+# ------------------------------------------------------------------------------
 cat("\n5. Loading DE genes and background...\n")
 
 # Load DE results for NarrowvsBroad_TP0
@@ -201,7 +220,9 @@ cat("   Background genes:", length(background_genes), "\n")
 hormone_in_background <- intersect(hormone_glyma_ids, background_genes)
 cat("   Hormone pathway genes in background:", length(hormone_in_background), "\n")
 
+# ------------------------------------------------------------------------------
 # 6. Enrichment Analysis (Fisher's Exact Test) - All DE Genes
+# ------------------------------------------------------------------------------
 cat("\n6. Performing enrichment analysis for ALL DE genes...\n")
 
 perform_enrichment_test <- function(test_genes, background, hormone_genes, label) {
@@ -258,7 +279,9 @@ cat("     Hormone genes:", result_down$Hormone_in_test, "\n")
 cat("     Fold enrichment:", result_down$Fold_enrichment, "\n")
 cat("     P-value:", format(result_down$P_enrichment, digits = 4), "\n")
 
+# ------------------------------------------------------------------------------
 # 7. Identify Specific Hormone Genes in DE Set
+# ------------------------------------------------------------------------------
 cat("\n7. Identifying hormone genes among DE genes...\n")
 
 de_hormone_genes <- de_results %>%
@@ -283,7 +306,9 @@ cat("   DE hormone genes:", sum(de_hormone_genes$Significant), "\n")
 cat("   - Upregulated:", sum(de_hormone_genes$DE_status == "Up_in_Narrow"), "\n")
 cat("   - Downregulated:", sum(de_hormone_genes$DE_status == "Down_in_Narrow"), "\n")
 
+# ------------------------------------------------------------------------------
 # 8. Create Results Summary Table
+# ------------------------------------------------------------------------------
 cat("\n8. Creating summary tables...\n")
 
 enrichment_summary <- data.frame(
@@ -314,7 +339,9 @@ cat("\n   Enrichment Summary:\n")
 print(as.data.frame(enrichment_summary[, c("Gene_Set", "Hormone_genes_found", "Expected",
                                             "Fold_enrichment", "P_value_enrichment", "Interpretation")]))
 
+# ------------------------------------------------------------------------------
 # 9. Visualization
+# ------------------------------------------------------------------------------
 cat("\n9. Creating visualizations...\n")
 
 # Plot 1: Enrichment comparison
@@ -383,7 +410,9 @@ if (nrow(de_hormone_sig) > 0) {
   cat("   Saved: DE_hormone_genes_expression.png/pdf\n")
 }
 
+# ------------------------------------------------------------------------------
 # 10. Save Checkpoint
+# ------------------------------------------------------------------------------
 cat("\n10. Saving checkpoint...\n")
 
 hormone_de_analysis <- list(
@@ -402,9 +431,13 @@ save(hormone_de_analysis, hormone_gene_details,
      file = "03_results/checkpoints/37a_hormone_DE.RData")
 cat("   Saved: 37a_hormone_DE.RData\n")
 
+# ------------------------------------------------------------------------------
 # 11. Print Summary Report
+# ------------------------------------------------------------------------------
 cat("\n")
+cat("=======================================================================\n")
 cat("                SCRIPT 37a SUMMARY: HORMONE DE ENRICHMENT\n")
+cat("=======================================================================\n\n")
 
 cat("QUESTION: Are hormone pathway genes differentially expressed between\n")
 cat("          narrow and broad leaves at TP0?\n\n")
@@ -449,3 +482,5 @@ cat("  Checkpoint:\n")
 cat("    - 03_results/checkpoints/37a_hormone_DE.RData\n")
 
 cat("\n=======================================================================\n")
+cat("Script 37a complete. Next: Run 37b to test JAG1 target enrichment.\n")
+cat("=======================================================================\n")

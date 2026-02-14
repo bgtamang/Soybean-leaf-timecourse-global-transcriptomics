@@ -1,4 +1,6 @@
 #!/usr/bin/env Rscript
+# =============================================================================
+# Script 34b: KRP-TPR-HDA Repression Pathway Trajectory Analysis
 # Analyze the complete JAG1 repression machinery across all timepoints
 #
 # MECHANISTIC MODEL (based on Arabidopsis studies):
@@ -15,6 +17,7 @@
 # - Wang et al. 2013 (Nature Comms) - BES1/TPL/HDA19 complex
 # - Yu et al. 2025 (Sci Rep) - Soybean TPR gene family (12 genes)
 # - Yang et al. 2018 (BMC Plant Biol) - Soybean HDA gene family (28 genes)
+# =============================================================================
 
 suppressPackageStartupMessages({
   library(tidyverse)
@@ -22,8 +25,10 @@ suppressPackageStartupMessages({
   library(edgeR)
 })
 
+# =============================================================================
 # SETUP - Absolute paths
-base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase2-Refined-Analysis"
+# =============================================================================
+base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
 
 cat("=" |> rep(70) |> paste(collapse = ""), "\n")
 cat("KRP EXPRESSION TRAJECTORY ANALYSIS\n")
@@ -37,7 +42,9 @@ out_tbl_dir <- file.path(base_dir, "03_results/tables/34b_KRP_trajectories")
 dir.create(out_fig_dir, recursive = TRUE, showWarnings = FALSE)
 dir.create(out_tbl_dir, recursive = TRUE, showWarnings = FALSE)
 
+# =============================================================================
 # LOAD DATA
+# =============================================================================
 cat("\n1. Loading data...\n")
 
 # Try multiple checkpoint files
@@ -72,7 +79,9 @@ if (!file.exists(sample_file)) {
 sample_info <- read_csv(sample_file, show_col_types = FALSE)
 cat("   Loaded sample metadata:", nrow(sample_info), "samples\n")
 
+# =============================================================================
 # FIND EXPRESSION MATRIX
+# =============================================================================
 cat("\n2. Finding expression matrix...\n")
 
 expr_matrix <- NULL
@@ -119,7 +128,9 @@ if (is.null(expr_matrix)) {
 
 cat("   Matrix dimensions:", nrow(expr_matrix), "genes x", ncol(expr_matrix), "samples\n")
 
+# =============================================================================
 # DEFINE KRP GENES
+# =============================================================================
 cat("\n3. Extracting KRP genes...\n")
 
 krp_genes <- data.frame(
@@ -147,7 +158,9 @@ if (sum(krp_in_matrix) == 0) {
 
 krp_expr <- expr_matrix[rownames(expr_matrix) %in% krp_genes$GeneID, , drop = FALSE]
 
+# =============================================================================
 # PREPARE DATA FOR ANALYSIS
+# =============================================================================
 cat("\n4. Preparing data...\n")
 
 # Convert to long format
@@ -186,7 +199,9 @@ if (na_count > 0) {
 
 cat("   Data prepared:", nrow(krp_long), "observations\n")
 
+# =============================================================================
 # CALCULATE SUMMARY STATISTICS
+# =============================================================================
 cat("\n5. Calculating summary statistics...\n")
 
 krp_summary <- krp_long %>%
@@ -212,7 +227,9 @@ print(krp_diff %>%
         pivot_wider(names_from = Timepoint, values_from = Diff_NarrowMinusBroad) %>%
         as.data.frame(), row.names = FALSE)
 
+# =============================================================================
 # STATISTICAL TESTS
+# =============================================================================
 cat("\n6. Running statistical tests (t-test at each timepoint)...\n")
 
 results_list <- list()
@@ -260,7 +277,9 @@ all_results <- all_results %>%
   mutate(FDR = p.adjust(P_value, method = "BH")) %>%
   ungroup()
 
+# =============================================================================
 # SUMMARY OF RESULTS
+# =============================================================================
 cat("\n" , rep("=", 70) |> paste(collapse = ""), "\n")
 cat("RESULTS SUMMARY\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
@@ -277,7 +296,9 @@ if (nrow(sig_nominal) > 0) {
   print(sig_nominal %>% select(Name, Timepoint, Difference, P_value, FDR) %>% as.data.frame(), row.names = FALSE)
 }
 
+# =============================================================================
 # GENERATE PLOTS
+# =============================================================================
 cat("\n7. Generating plots...\n")
 
 # Plot 1: Trajectories
@@ -336,7 +357,9 @@ p3 <- ggplot(krp_diff, aes(x = Timepoint, y = Name, fill = Diff_NarrowMinusBroad
 ggsave(file.path(out_fig_dir, "KRP_difference_heatmap.png"), p3, width = 8, height = 6, dpi = 300)
 cat("   Saved: KRP_difference_heatmap.png\n")
 
+# =============================================================================
 # SAVE RESULTS
+# =============================================================================
 cat("\n8. Saving results...\n")
 
 write_csv(all_results, file.path(out_tbl_dir, "KRP_timepoint_comparisons.csv"))
@@ -347,7 +370,9 @@ cat("   Saved: KRP_timepoint_comparisons.csv\n")
 cat("   Saved: KRP_expression_summary.csv\n")
 cat("   Saved: KRP_expression_differences.csv\n")
 
+# =============================================================================
 # FINAL CONCLUSION
+# =============================================================================
 cat("\n", rep("=", 70) |> paste(collapse = ""), "\n")
 cat("CONCLUSION\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
@@ -368,7 +393,9 @@ cat("\nThis confirms: Despite JAG1 binding to KRP genes,\n")
 cat("KRP expression remains stable across all developmental stages.\n")
 cat("BINDING ≠ REGULATION\n\n")
 
+# =============================================================================
 # PART 2: TPR (TOPLESS-RELATED) GENE ANALYSIS
+# =============================================================================
 cat("\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
 cat("PART 2: TPR (TOPLESS) CO-REPRESSOR ANALYSIS\n")
@@ -526,7 +553,9 @@ if (sum(tpr_in_matrix) > 0) {
   tpr_summary <- NULL
 }
 
+# =============================================================================
 # PART 3: HDA (HISTONE DEACETYLASE) GENE ANALYSIS
+# =============================================================================
 cat("\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
 cat("PART 3: HDA (HISTONE DEACETYLASE) ANALYSIS\n")
@@ -673,7 +702,9 @@ if (file.exists(annotation_file)) {
   hda_summary <- NULL
 }
 
+# =============================================================================
 # PART 4: INTEGRATED REPRESSION PATHWAY SUMMARY
+# =============================================================================
 cat("\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
 cat("INTEGRATED REPRESSION PATHWAY ANALYSIS\n")
@@ -724,7 +755,9 @@ if (exists("hda_summary") && !is.null(hda_summary)) {
   cat("   Mean HDA expression at TP0:", round(mean(hda_tp0$Mean_expr), 2), "logCPM\n")
 }
 
+# =============================================================================
 # FINAL CONCLUSIONS
+# =============================================================================
 cat("\n")
 cat(rep("=", 70) |> paste(collapse = ""), "\n")
 cat("FINAL CONCLUSIONS\n")

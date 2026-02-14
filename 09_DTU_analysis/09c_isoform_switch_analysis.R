@@ -1,17 +1,30 @@
+# Script 42: Isoform Switch Analysis
 
+# ===== CLEAR ENVIRONMENT =====
 rm(list = ls())
 gc()
 
 cat("\n")
+cat("================================================================\n")
 cat("  SCRIPT 42: ISOFORM SWITCH ANALYSIS\n")
+cat("  GmJAG1 Soybean RNA-Seq Analysis\n")
+cat("================================================================\n")
+cat("  Started:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
+# ===== SETUP =====
 
 base_dir <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ"
-setwd(file.path(base_dir, "Phase2-Refined-Analysis"))
+setwd(file.path(base_dir, "Phase3-Refined-Analysis"))
 cat("Working directory:", getwd(), "\n\n")
 
 # Create output directories
 dir.create("03_results/figures/42_isoform_switches", recursive = TRUE, showWarnings = FALSE)
+
+# ===== LOAD REQUIRED PACKAGES =====
+
+cat("Loading required packages...\n")
+
 required_packages <- c(
   "dplyr",            # Data manipulation
   "tidyr",            # Data reshaping
@@ -37,6 +50,13 @@ for (pkg in required_packages) {
 
 invisible(lapply(required_packages, library, character.only = TRUE))
 cat("  Packages loaded\n\n")
+
+# ===== SECTION 1: LOAD DATA =====
+
+cat("========================================\n")
+cat("SECTION 1: LOAD DATA\n")
+cat("========================================\n\n")
+
 # Load DTU results
 load("03_results/checkpoints/41_dtu_drimseq.RData")
 cat("Loaded DTU results from script 41\n")
@@ -48,6 +68,13 @@ cat("Loaded prepared transcript data from script 40\n")
 cat("  Transcripts:", nrow(tx_counts_filt), "\n")
 cat("  Genes:", length(unique(tx2gene_filt$GENEID)), "\n")
 cat("  Significant DTU genes:", sum(res_gene_final$significant_DTU, na.rm = TRUE), "\n\n")
+
+# ===== SECTION 2: IDENTIFY ISOFORM SWITCHES =====
+
+cat("========================================\n")
+cat("SECTION 2: IDENTIFY ISOFORM SWITCHES\n")
+cat("========================================\n\n")
+
 # An isoform switch is when the dominant transcript changes between conditions
 # We'll identify switches based on:
 # 1. Significant DTU (from DRIMSeq)
@@ -108,6 +135,13 @@ cat("  Genes with dominant isoform switch:", nrow(genes_with_switch), "\n")
 
 # Mark switches
 switch_analysis$is_switch_gene <- switch_analysis$gene_id %in% genes_with_switch$gene_id
+
+# ===== SECTION 3: DEFINE SIGNIFICANT ISOFORM SWITCHES =====
+
+cat("========================================\n")
+cat("SECTION 3: DEFINE SIGNIFICANT ISOFORM SWITCHES\n")
+cat("========================================\n\n")
+
 # Criteria for significant isoform switch:
 # 1. Gene has significant DTU (stageR OFDR < 0.05)
 # 2. Either:
@@ -140,6 +174,13 @@ significant_switches$switch_direction <- ifelse(
 cat("Switch direction summary:\n")
 print(table(significant_switches$switch_direction))
 cat("\n")
+
+# ===== SECTION 4: ANALYZE JAG1 ISOFORMS =====
+
+cat("========================================\n")
+cat("SECTION 4: ANALYZE JAG1 ISOFORMS\n")
+cat("========================================\n\n")
+
 # JAG1 gene: Glyma.20G116200
 jag1_gene <- "Glyma.20G116200"
 jag1_isoforms <- switch_analysis %>%
@@ -176,6 +217,13 @@ if (nrow(jag1_isoforms) > 0) {
 } else {
   cat("JAG1 not found in isoform analysis data\n\n")
 }
+
+# ===== SECTION 5: ANALYZE JAG1 TARGET ISOFORM SWITCHES =====
+
+cat("========================================\n")
+cat("SECTION 5: JAG1 TARGET ISOFORM SWITCHES\n")
+cat("========================================\n\n")
+
 if (!is.null(jag1_targets)) {
   # Add JAG1 target info to switch analysis
   significant_switches$is_JAG1_target <- significant_switches$gene_id %in% jag1_targets$GeneID
@@ -206,6 +254,13 @@ if (!is.null(jag1_targets)) {
   print(head(jag1_switches, 15))
   cat("\n")
 }
+
+# ===== SECTION 6: TEMPORAL ISOFORM DYNAMICS =====
+
+cat("========================================\n")
+cat("SECTION 6: TEMPORAL ISOFORM DYNAMICS\n")
+cat("========================================\n\n")
+
 # Analyze isoform proportions across timepoints
 timepoints <- c("TP0", "TP1", "TP2", "TP3", "TP4")
 
@@ -241,6 +296,13 @@ if (length(temporal_props) > 0) {
   cat("Created temporal isoform dynamics data\n")
   cat("  Observations:", nrow(temporal_long), "\n\n")
 }
+
+# ===== SECTION 7: VISUALIZATION =====
+
+cat("========================================\n")
+cat("SECTION 7: VISUALIZATION\n")
+cat("========================================\n\n")
+
 # Plot 1: Distribution of proportion changes
 p1 <- ggplot(switch_analysis, aes(x = delta_prop)) +
   geom_histogram(binwidth = 0.02, fill = "#2166AC", color = "white", alpha = 0.8) +
@@ -360,6 +422,13 @@ ggsave("03_results/figures/42_isoform_switches/top_isoform_switches.pdf", p4, wi
 cat("Saved: top_isoform_switches.pdf\n")
 
 cat("\n")
+
+# ===== SECTION 8: SAVE RESULTS =====
+
+cat("========================================\n")
+cat("SECTION 8: SAVE RESULTS\n")
+cat("========================================\n\n")
+
 # Save checkpoint
 save(
   switch_analysis,        # All switch analysis data
@@ -386,8 +455,13 @@ if (nrow(jag1_isoforms) > 0) {
 
 cat("\n")
 
+# ===== COMPLETION =====
 
+cat("================================================================\n")
+cat("  SCRIPT 42 COMPLETE\n")
+cat("================================================================\n")
 cat("  Finished:", format(Sys.time(), "%Y-%m-%d %H:%M:%S"), "\n")
+cat("================================================================\n\n")
 
 cat("SUMMARY:\n")
 cat("  - Analyzed", nrow(switch_analysis), "transcripts for isoform switches\n")
@@ -399,3 +473,4 @@ if (nrow(jag1_isoforms) > 0) {
 }
 cat("\n")
 
+cat("NEXT: Run 43_DTU_functional_annotation.R for GO enrichment of DTU genes\n")
