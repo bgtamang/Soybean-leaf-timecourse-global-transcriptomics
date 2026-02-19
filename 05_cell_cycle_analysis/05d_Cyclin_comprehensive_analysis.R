@@ -13,7 +13,7 @@
 # - Hypothesis: Soybean JAG1 activates Cyclins → presses gas → cell division
 #
 # METHODS:
-# 1. Identify cyclin genes via Pfam domains (PF00461, PF02984, PF03461)
+# 1. Identify cyclin genes via Pfam domains (PF00134, PF02984)
 # 2. Identify cyclin genes via annotation keyword search
 # 3. Cross-reference with JAG1 targets list
 # 4. Check binding evidence (ChIP-seq, DAP-seq)
@@ -84,14 +84,14 @@ cat("METHOD 1: PFAM DOMAIN SEARCH\n")
 cat("=" %>% rep(80) %>% paste(collapse = ""), "\n\n")
 
 # Cyclin-related Pfam domains:
-# PF00461 - Cyclin, N-terminal domain (main cyclin domain)
+# PF00134 - Cyclin, N-terminal domain (main cyclin domain)
 # PF02984 - Cyclin, C-terminal domain
 # PF03461 - Cyclin-like F-box (related but not core cyclins)
 
-cyclin_pfam_patterns <- c("PF00461", "PF02984")
+cyclin_pfam_patterns <- c("PF00134", "PF02984")
 
 cat("Searching for Pfam domains:\n")
-cat("  PF00461 = Cyclin, N-terminal domain\n")
+cat("  PF00134 = Cyclin, N-terminal domain\n")
 cat("  PF02984 = Cyclin, C-terminal domain\n\n")
 
 pfam_cyclins <- annotation_loci %>%
@@ -496,7 +496,7 @@ report_lines <- c(
   "## Methods",
   "",
   "### Cyclin Identification",
-  "- Pfam domain search: PF00461 (Cyclin N-terminal), PF02984 (Cyclin C-terminal)",
+  "- Pfam domain search: PF00134 (Cyclin N-terminal), PF02984 (Cyclin C-terminal)",
   "- Keyword search in annotations: CYCLIN, CYCA, CYCB, CYCD, CYCU",
   "- Excluded CDK inhibitors (KRPs) which mention 'cyclin-dependent'",
   "",
