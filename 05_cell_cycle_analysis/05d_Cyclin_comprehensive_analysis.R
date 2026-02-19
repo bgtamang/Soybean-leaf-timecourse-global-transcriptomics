@@ -131,7 +131,8 @@ keyword_cyclins <- annotation_loci %>%
                `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
   # Exclude CDK inhibitors (KRPs) and false positives from substring matches
   # e.g. "recycling" contains "cyclin" as a substring
-  filter(!grepl("INHIBITOR|KRP|ICK|recycling", `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
+  # "CYCLIN-DEPENDENT KINASE" contains "CYCLIN" but is a CDK, not a cyclin
+  filter(!grepl("INHIBITOR|KRP|ICK|recycling|KINASE", `Best-hit-arabi-defline`, ignore.case = TRUE)) %>%
   select(locusName, Pfam, `Best-hit-arabi-name`, `Best-hit-arabi-defline`)
 
 cat("RESULTS:\n")
@@ -171,7 +172,7 @@ cat("  Found by both:", sum(all_cyclins$found_by_pfam & all_cyclins$found_by_key
 # Genes found only by keyword (not Pfam) are re-checked:
 # Their defline must contain a genuine cyclin keyword AND must not contain
 # false-positive substrings (e.g. "recycling" contains "cyclin").
-exclude_pattern <- "recycling|INHIBITOR|KRP|ICK"
+exclude_pattern <- "recycling|INHIBITOR|KRP|ICK|KINASE"
 
 keyword_only <- all_cyclins %>%
   filter(!found_by_pfam & found_by_keyword)
