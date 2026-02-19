@@ -86,7 +86,6 @@ cat("=" %>% rep(80) %>% paste(collapse = ""), "\n\n")
 # Cyclin-related Pfam domains:
 # PF00134 - Cyclin, N-terminal domain (main cyclin domain)
 # PF02984 - Cyclin, C-terminal domain
-# PF03461 - Cyclin-like F-box (related but not core cyclins)
 
 cyclin_pfam_patterns <- c("PF00134", "PF02984")
 
