@@ -37,11 +37,11 @@ methods_ui <- function(id) {
               "the soybean reference transcriptome (Wm82.a6.v1)."),
             h5("2. Normalization & Batch Correction"),
             p("Transcript-level abundance estimates were summarized to gene-level counts using ",
-              "tximport. Batch effects between 2021 and 2022 sequencing runs were corrected ",
-              "using ComBat-seq. TMM normalization was applied using edgeR."),
+              "tximport. Batch effects between two sequencing runs were corrected ",
+              "using ComBat-seq (sva). TMM normalization was applied using edgeR."),
             h5("3. Differential Expression"),
-            p("Differential expression analysis was performed using the limma-voom pipeline. ",
-              "Genes with FDR < 0.05 and |log2FC| > 1 were considered differentially expressed."),
+            p("Differential expression analysis was performed using the edgeR quasi-likelihood (QL) ",
+              "framework. Genes with FDR < 0.05 and |log2FC| > 1 were considered differentially expressed."),
             h5("4. JAG1 Target Identification"),
             p("JAG1 targets were identified through a tiered approach based on consistency ",
               "across pairwise genotype comparisons at TP0:"),
@@ -66,12 +66,11 @@ methods_ui <- function(id) {
             tags$table(class = "table table-sm",
               tags$tr(tags$td("R"), tags$td("4.5.2")),
               tags$tr(tags$td("Salmon"), tags$td("1.10.0")),
-              tags$tr(tags$td("tximport"), tags$td("1.30.0")),
-              tags$tr(tags$td("edgeR"), tags$td("4.0.16")),
-              tags$tr(tags$td("limma"), tags$td("3.58.1")),
-              tags$tr(tags$td("WGCNA"), tags$td("1.72-5")),
-              tags$tr(tags$td("clusterProfiler"), tags$td("4.10.1")),
-              tags$tr(tags$td("ComBat-seq"), tags$td("sva 3.50.0"))
+              tags$tr(tags$td("tximport"), tags$td("1.36.1")),
+              tags$tr(tags$td("edgeR"), tags$td("4.6.3")),
+              tags$tr(tags$td("WGCNA"), tags$td("1.73")),
+              tags$tr(tags$td("clusterProfiler"), tags$td("4.16.0")),
+              tags$tr(tags$td("ComBat-seq"), tags$td("sva 3.56.0"))
             )
           )
         ),
@@ -82,7 +81,7 @@ methods_ui <- function(id) {
             p(tags$b("Assembly:"), " Wm82.a6.v1"),
             p(tags$b("Source:"), " Phytozome v13"),
             p(tags$b("Genes:"), " 48,359 total"),
-            p(tags$b("After Filtering:"), " 35,938 (CPM > 1 in 3+ samples)")
+            p(tags$b("After Filtering:"), " 35,941 (CPM > 1 in 3+ samples)")
           )
         ),
         card(

@@ -16,7 +16,7 @@
 # - Krogan et al. 2012 (Development) - AP2/TPL/HDA19 mechanism
 # - Wang et al. 2013 (Nature Comms) - BES1/TPL/HDA19 complex
 # - Yu et al. 2025 (Sci Rep) - Soybean TPR gene family (12 genes)
-# - Yang et al. 2018 (BMC Plant Biol) - Soybean HDA gene family (28 genes)
+# - 20 soybean HDA genes identified via functional annotation (Wm82.a6.v1)
 # =============================================================================
 
 suppressPackageStartupMessages({

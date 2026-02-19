@@ -72,16 +72,15 @@ cat("Batch composition:\n")
 print(table(targets$Batch, targets$Timepoint))
 
 cat("\nBatch-Timepoint confounding:\n")
-cat("  2021 batch: TP1, TP2, TP3, TP4 samples only\n")
-cat("  2022 batch: TP0 samples only\n")
-cat("  STATUS: COMPLETELY CONFOUNDED\n\n")
+cat("  Batch 1: PI547745 + LD112170 at TP1-TP4 (24 samples)\n")
+cat("  Batch 2: TP0 added for Batch 1 genotypes (6 samples) +\n")
+cat("           PI612713B + PI532462A at all TP0-TP4 (30 samples)\n")
+cat("  STATUS: Batch partially confounded with genotype and timepoint\n\n")
 
 cat("This means:\n")
-cat("  - We CANNOT distinguish batch effects from TP0 biology\n")
-cat("  - Standard batch correction would remove TP0-specific genes\n")
-cat("  - We will use TWO approaches:\n")
-cat("    1. Primary: ComBat-seq with biological covariates\n")
-cat("    2. Sensitivity: Analysis excluding TP0 (no batch effect)\n\n")
+cat("  - Batch and genotype/timepoint are partially confounded\n")
+cat("  - ComBat-seq with biological covariates preserves biological signal\n")
+cat("  - Timepoint and leaf type included as covariates during correction\n\n")
 
 # ===== VISUALIZE BATCH EFFECTS BEFORE CORRECTION =====
 

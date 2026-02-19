@@ -61,7 +61,7 @@ expression_ui <- function(id) {
                         "Custom (enter below)" = "custom",
                         "Housekeeping - Top 20 (most stable)" = "hk_top20",
                         "Housekeeping - Top 50" = "hk_top50",
-                        "Housekeeping - All (448 genes)" = "hk_all",
+                        "Housekeeping - All (452 genes)" = "hk_all",
                         "JAG1 Targets - Gold" = "jag1_gold",
                         "JAG1 Targets - Silver" = "jag1_silver",
                         "JAG1 Targets - Bronze" = "jag1_bronze",
