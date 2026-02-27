@@ -21,6 +21,10 @@ Glycine max Williams 82 genome assembly Gmax_880_v6.0 and annotation Wm82.a6.v1 
 - **Huang et al. 2021** ChIP-seq supplementary Table S2: `1-s2.0-S0888754320320723-mmc2.xlsx` from [Huang et al. (2021) *Genomics* 113:1304-1316](https://doi.org/10.1016/j.ygeno.2020.12.033)
 - **Wang et al. 2024** DAP-seq supplementary data: `plants-3024718-supplementary.xlsx` from [Wang et al. (2024) *Plants* 13:1024](https://doi.org/10.3390/plants13071024)
 
+### Published snRNA-seq data (for 12_single_cell_integration)
+- **Fan et al. 2025** soybean shoot apex and leaf single-nucleus RNA-seq: Pre-processed h5ad files (`SAM.scRNA.h5ad`, `Leaf.scRNA.h5ad`) from [SoyOmics](https://ngdc.cncb.ac.cn/soyomics). Reference: [Fan et al. (2025) *Molecular Plant* 18:669-689](https://doi.org/10.1016/j.molp.2025.02.003)
+- **SoyBase pangene table**: `Glycine.pan5.MKRS.table_ref_lines.tsv.gz` from [SoyBase](https://www.soybase.org/) (downloaded automatically by 12a script)
+
 ## Setup
 
 All R scripts define a `base_dir` variable at the top. Before running, update this path in each script to point to your local project directory:
@@ -31,6 +35,8 @@ base_dir <- "/path/to/your/project"
 
 Shell scripts in `01_preprocessing/` contain SLURM directives for HPC execution. Update paths and SLURM parameters for your computing environment.
 
+Python scripts in `12_single_cell_integration/` define a `BASE_DIR` variable similarly. Update this and ensure the conda environment has the required packages (see below).
+
 Place downloaded data as follows:
 ```
 <base_dir>/
@@ -39,12 +45,23 @@ Place downloaded data as follows:
 ├── Manuscript/Literature/
 │   ├── Huang et al 2021 Chip Seq/     # Huang ChIP-seq supplementary Excel
 │   └── Wang et al DAP-Seq/            # Wang DAP-seq supplementary Excel
+├── single_cell_integration/data/      # snRNA-seq h5ad files and pangene table
 ```
 
 ## Software Requirements
 
 - **R** v4.5.2
 - **Salmon** v1.10.0 (read quantification)
+- **Python** 3.10 (single-cell integration, step 12 only)
+
+### Python Packages (for 12_single_cell_integration)
+
+| Package | Purpose |
+|---------|---------|
+| scanpy | Single-cell data I/O and analysis |
+| pandas | Data manipulation |
+| numpy | Array operations |
+| scipy | Statistical tests (Mann-Whitney, Spearman, Pearson) |
 
 ### R Packages
 
@@ -99,6 +116,9 @@ Scripts are organized in execution order:
 11_validated_genes_analysis/ Functional categorization, visualization, and heatmap
                            of 79 high-confidence targets (Gold: 76, Silver: 69,
                            Bronze: 1,422; total: 1,567 tiered targets)
+12_single_cell_integration/ Gene ID conversion (Wm82↔ZH13), hypothesis-driven
+                           pathway validation and data-driven target mapping
+                           using published snRNA-seq (Fan et al. 2025)
 shiny_app/                 Interactive Shiny dashboard for exploring results
 ```
 
@@ -113,6 +133,7 @@ Folders are numbered in the order they should be run. Within each folder, script
 5. **06f** (functional integration) optionally incorporates WGCNA results from step 7
 6. **10** integrates results from steps 4, 6f, 7, and 8
 7. **11** uses the 79 high-confidence targets from step 10
+8. **12** uses target gene lists from step 4 and high-confidence targets from step 10; requires Python 3.10+ with scanpy
 
 ## Experimental Design
 
