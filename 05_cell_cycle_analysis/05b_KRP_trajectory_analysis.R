@@ -578,33 +578,45 @@ if (file.exists(annotation_file)) {
                            col_types = cols(.default = "c"),
                            show_col_types = FALSE)
 
-  # Search for HDA genes by keyword
-  hda_from_annotation <- annotation %>%
-    filter(grepl("HISTONE DEACETYLASE|HDA19|HDA6|RPD3", `Best-hit-arabi-defline`, ignore.case = TRUE) |
-           grepl("HDA19|HDA6|HDA[0-9]", `Best-hit-arabi-name`, ignore.case = TRUE)) %>%
+  # Curated HDAC complex gene list: 15 genes (9 catalytic + 6 complex subunits)
+  # Source: Yang et al. 2018 (BMC Plant Biol) DOI: 10.1186/s12870-018-1454-7
+  # Verified against Phytozome v14 Wm82.a6 annotation + TAIR10 orthology.
+  #
+  # Five genes removed from original keyword-grep 20-gene list:
+  #   Glyma.01G243000  IST1P/UBP (ubiquitin-binding protein, not an HDA)
+  #   Glyma.05G185800  Sm D3 (spliceosomal protein, not an HDA)
+  #   Glyma.08G143900  Sm D3 (spliceosomal protein, not an HDA)
+  #   Glyma.12G203000  IST1P/ESCRT-III (not an HDA, not expressed)
+  #   Glyma.13G298700  IST1P/ESCRT-III (not an HDA, not expressed)
+  cat("   Curated HDAC complex gene list (15 genes)...\n")
+  cat("   Source: Yang et al. 2018 + manual curation against Phytozome v14\n")
+
+  hda_genes <- data.frame(
+    GeneID = c("Glyma.03G019600", "Glyma.04G033900", "Glyma.04G034000",
+               "Glyma.05G012850", "Glyma.05G021400", "Glyma.05G192600",
+               "Glyma.06G034100", "Glyma.06G034200", "Glyma.07G081500",
+               "Glyma.11G187800", "Glyma.12G086700", "Glyma.12G188200",
+               "Glyma.17G078000", "Glyma.17G120900", "Glyma.17G229600"),
+    Name = c("GmHDA1", "GmHDA2", "GmHDA3", "GmHDA4", "GmHDA5",
+             "GmHDA6", "GmHDA7", "GmHDA8", "GmHDA9", "GmHDA10",
+             "GmHDA11", "GmHDA12", "GmHDA13", "GmHDA14", "GmHDA15")
+  )
+
+  # Load annotation for Arabidopsis ortholog metadata (NOT used for gene selection)
+  hdac_anno <- annotation %>%
+    filter(locusName %in% hda_genes$GeneID) %>%
     select(locusName, `Best-hit-arabi-name`, `Best-hit-arabi-defline`) %>%
-    distinct(locusName, .keep_all = TRUE) %>%
-    filter(locusName %in% rownames(expr_matrix))
+    distinct(locusName, .keep_all = TRUE)
+  hda_genes <- hda_genes %>%
+    left_join(hdac_anno, by = c("GeneID" = "locusName")) %>%
+    rename(At_ortholog = `Best-hit-arabi-name`, Description = `Best-hit-arabi-defline`)
 
-  cat("   Found", nrow(hda_from_annotation), "HDA genes in expression matrix\n")
+  # Check which HDAC genes are in expression matrix
+  hda_in_matrix <- hda_genes$GeneID %in% rownames(expr_matrix)
+  cat("   HDAC genes found in matrix:", sum(hda_in_matrix), "/", nrow(hda_genes), "\n")
+  hda_genes <- hda_genes[hda_in_matrix, ]
 
-  if (nrow(hda_from_annotation) > 0) {
-    # Create HDA gene table
-    hda_genes <- data.frame(
-      GeneID = hda_from_annotation$locusName,
-      Name = paste0("GmHDA_", seq_len(nrow(hda_from_annotation))),
-      At_ortholog = hda_from_annotation$`Best-hit-arabi-name`,
-      Description = hda_from_annotation$`Best-hit-arabi-defline`
-    )
-
-    # Simplify names based on Arabidopsis ortholog
-    hda_genes <- hda_genes %>%
-      mutate(Name = case_when(
-        grepl("HDA19", At_ortholog, ignore.case = TRUE) ~ paste0("GmHDA19-like_", row_number()),
-        grepl("HDA6", At_ortholog, ignore.case = TRUE) ~ paste0("GmHDA6-like_", row_number()),
-        TRUE ~ paste0("GmHDA_", row_number())
-      ))
-
+  if (nrow(hda_genes) > 0) {
     print(hda_genes %>% select(GeneID, Name, At_ortholog), row.names = FALSE)
 
     # Extract expression

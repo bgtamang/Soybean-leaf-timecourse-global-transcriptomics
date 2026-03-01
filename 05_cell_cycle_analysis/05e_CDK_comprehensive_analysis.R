@@ -225,6 +225,23 @@ cat("  Found by Ortholog only:", sum(!all_cdks$found_by_keyword & all_cdks$found
 cat("  Found by both:", sum(all_cdks$found_by_keyword & all_cdks$found_by_ortholog), "\n\n")
 
 # -----------------------------------------------------------------------------
+# 4b. Require protein kinase domain (PF00069 or PF07714)
+# -----------------------------------------------------------------------------
+# CDKs are protein kinases and must contain a kinase domain. Keyword/ortholog
+# searches can pull in non-kinase proteins that interact with or regulate CDKs:
+#   - CKS/Suc1 regulatory subunits (PF01111): bind CDKs but have no kinase activity
+#   - CDK-interacting proteins (no Pfam): interact with CDK2, not kinases
+#   - ABC1 kinase domain proteins (PF03109): divergent kinase family, not CDKs
+
+n_before_kinase <- nrow(all_cdks)
+all_cdks <- all_cdks %>%
+  filter(grepl("PF00069|PF07714", Pfam))
+
+cat(sprintf("Removed %d entries lacking protein kinase domain (PF00069/PF07714)\n",
+            n_before_kinase - nrow(all_cdks)))
+cat("Validated CDK genes (kinase-confirmed):", nrow(all_cdks), "\n\n")
+
+# -----------------------------------------------------------------------------
 # 4a. Classify CDK types
 # -----------------------------------------------------------------------------
 

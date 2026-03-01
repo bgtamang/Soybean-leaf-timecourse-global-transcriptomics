@@ -194,7 +194,23 @@ if (nrow(keyword_only) > 0) {
   }
 }
 
-cat("Validated cyclin genes:", nrow(all_cyclins), "\n\n")
+cat("After keyword false-positive removal:", nrow(all_cyclins), "\n\n")
+
+# -----------------------------------------------------------------------------
+# 4c. Require canonical cyclin Pfam domain (PF00134 or PF02984)
+# -----------------------------------------------------------------------------
+# Keyword-only matches that lack the defining cyclin fold domain are not true
+# cyclins. Categories removed: cyclin-BINDING proteins (PF12014), CACYBP/SIP
+# (PF04969), PHD/FHA proteins (PF00382), divergent "cyclin-like" (PF21052),
+# alternative cyclin domains (PF08613/PF16899), and genes with no Pfam domain.
+
+n_before_pfam <- nrow(all_cyclins)
+all_cyclins <- all_cyclins %>%
+  filter(found_by_pfam == TRUE)
+
+cat(sprintf("Removed %d keyword-only hits lacking PF00134/PF02984 cyclin domains\n",
+            n_before_pfam - nrow(all_cyclins)))
+cat("Validated cyclin genes (Pfam-confirmed):", nrow(all_cyclins), "\n\n")
 
 # -----------------------------------------------------------------------------
 # 4a. Classify cyclin types

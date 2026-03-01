@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 # Script 43: Hypothesis-Driven Single-Cell Analysis
-# Tests each link of the JAG1 -> EAR -> TPR -> HDA repression pathway
+# Tests each link of the JAG1 -> EAR -> TPR -> HDAC repression pathway
 # using Fan et al. 2025 soybean shoot apex snRNA-seq data
 # Run on HPC: sbatch run_hypothesis.sh (see below for conda env)
 
@@ -25,7 +25,7 @@ os.makedirs(OUT_DIR, exist_ok=True)
 
 print("=" * 64)
 print("  SCRIPT 43: HYPOTHESIS-DRIVEN SINGLE-CELL ANALYSIS")
-print("  JAG1 -> TPR -> HDA -> Cyclin repression pathway")
+print("  JAG1 -> TPR -> HDAC -> Cyclin repression pathway")
 print("=" * 64)
 print(f"  Started: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
 print("=" * 64)
@@ -61,28 +61,27 @@ tpr_genes = [
     {"name": "GmTPR12", "wm82": "Glyma.06G066200", "zh13": "SoyZH13-06G061800", "at_ortholog": "Soybean-specific"},
 ]
 
-# 20 HDA genes (manuscript Table S8). 5 have no pangene match -> None.
+# 15 HDAC complex genes (curated from Yang et al. 2018; 9 catalytic + 6 subunits).
+# Removed 5 misannotated genes from original 20-gene keyword-grep list:
+#   Glyma.01G243000 (IST1P/UBP), Glyma.05G185800 (Sm D3/SNRPD3),
+#   Glyma.08G143900 (Sm D3/SNRPD3), Glyma.12G203000 (IST1P/ESCRT-III),
+#   Glyma.13G298700 (IST1P/ESCRT-III)
 hda_genes = [
-    {"name": "GmHDA_1",  "wm82": "Glyma.01G243000", "zh13": None},
-    {"name": "GmHDA_2",  "wm82": "Glyma.03G019600", "zh13": None},
-    {"name": "GmHDA_3",  "wm82": "Glyma.04G033900", "zh13": None},
-    {"name": "GmHDA_4",  "wm82": "Glyma.04G034000", "zh13": "SoyZH13-04G032000"},
-    {"name": "GmHDA_5",  "wm82": "Glyma.05G012850", "zh13": None},
-    {"name": "GmHDA_6",  "wm82": "Glyma.05G021400", "zh13": "SoyZH13-05G020400"},
-    {"name": "GmHDA_7",  "wm82": "Glyma.05G185800", "zh13": "SoyZH13-05G173600"},
-    {"name": "GmHDA_8",  "wm82": "Glyma.05G192600", "zh13": "SoyZH13-05G180300"},
-    {"name": "GmHDA_9",  "wm82": "Glyma.06G034100", "zh13": "SoyZH13-06G032300"},
-    {"name": "GmHDA_10", "wm82": "Glyma.06G034200", "zh13": "SoyZH13-06G032400"},
-    {"name": "GmHDA_11", "wm82": "Glyma.07G081500", "zh13": "SoyZH13-07G076000"},
-    {"name": "GmHDA_12", "wm82": "Glyma.08G143900", "zh13": None},
-    {"name": "GmHDA_13", "wm82": "Glyma.11G187800", "zh13": "SoyZH13-11G159700"},
-    {"name": "GmHDA_14", "wm82": "Glyma.12G086700", "zh13": "SoyZH13-12G079300"},
-    {"name": "GmHDA_15", "wm82": "Glyma.12G188200", "zh13": "SoyZH13-12G168600"},
-    {"name": "GmHDA_16", "wm82": "Glyma.12G203000", "zh13": "SoyZH13-12G182400"},
-    {"name": "GmHDA_17", "wm82": "Glyma.13G298700", "zh13": "SoyZH13-13G273400"},
-    {"name": "GmHDA_18", "wm82": "Glyma.17G078000", "zh13": "SoyZH13-17G075400"},
-    {"name": "GmHDA_19", "wm82": "Glyma.17G120900", "zh13": "SoyZH13-17G116900"},
-    {"name": "GmHDA_20", "wm82": "Glyma.17G229600", "zh13": "SoyZH13-17G218400"},
+    {"name": "GmHDA1",  "wm82": "Glyma.03G019600", "zh13": None,                    "at_ortholog": "SAP18"},
+    {"name": "GmHDA2",  "wm82": "Glyma.04G033900", "zh13": None,                    "at_ortholog": "SAP30L"},
+    {"name": "GmHDA3",  "wm82": "Glyma.04G034000", "zh13": "SoyZH13-04G032000",     "at_ortholog": "SAP30L"},
+    {"name": "GmHDA4",  "wm82": "Glyma.05G012850", "zh13": None,                    "at_ortholog": "HDA15"},
+    {"name": "GmHDA5",  "wm82": "Glyma.05G021400", "zh13": "SoyZH13-05G020400",     "at_ortholog": "RPD3"},
+    {"name": "GmHDA6",  "wm82": "Glyma.05G192600", "zh13": "SoyZH13-05G180300",     "at_ortholog": "HDA6"},
+    {"name": "GmHDA7",  "wm82": "Glyma.06G034100", "zh13": "SoyZH13-06G032300",     "at_ortholog": "SAP30L"},
+    {"name": "GmHDA8",  "wm82": "Glyma.06G034200", "zh13": "SoyZH13-06G032400",     "at_ortholog": "SAP30L"},
+    {"name": "GmHDA9",  "wm82": "Glyma.07G081500", "zh13": "SoyZH13-07G076000",     "at_ortholog": "SAP18"},
+    {"name": "GmHDA10", "wm82": "Glyma.11G187800", "zh13": "SoyZH13-11G159700",     "at_ortholog": "HDAC1"},
+    {"name": "GmHDA11", "wm82": "Glyma.12G086700", "zh13": "SoyZH13-12G079300",     "at_ortholog": "HDAC1"},
+    {"name": "GmHDA12", "wm82": "Glyma.12G188200", "zh13": "SoyZH13-12G168600",     "at_ortholog": "Predicted HDA"},
+    {"name": "GmHDA13", "wm82": "Glyma.17G078000", "zh13": "SoyZH13-17G075400",     "at_ortholog": "RPD3"},
+    {"name": "GmHDA14", "wm82": "Glyma.17G120900", "zh13": "SoyZH13-17G116900",     "at_ortholog": "HDA15"},
+    {"name": "GmHDA15", "wm82": "Glyma.17G229600", "zh13": "SoyZH13-17G218400",     "at_ortholog": "HDAC11"},
 ]
 
 # --- Link 3: KRPs — NOT JAG1 targets in soybean ---
@@ -263,10 +262,10 @@ for gene in jag_genes:
 print()
 
 
-# ===== SECTION 3: LINK 2 — TPR + HDA =====
+# ===== SECTION 3: LINK 2 — TPR + HDAC =====
 
 print("========================================")
-print("SECTION 3: LINK 2 -- TPR + HDA")
+print("SECTION 3: LINK 2 -- TPR + HDAC")
 print("========================================")
 print()
 
@@ -275,8 +274,8 @@ tpr_df = gene_family_per_cluster(sam, tpr_genes, cluster_col, "TPR")
 if tpr_df is not None:
     tpr_df.to_csv(os.path.join(OUT_DIR, "link2_tpr_per_cluster.csv"), index=False)
 
-print("\n  --- HDA histone deacetylases (20 genes, 5 no ZH13) ---")
-hda_df = gene_family_per_cluster(sam, hda_genes, cluster_col, "HDA")
+print("\n  --- HDAC complex (15 genes, curated) ---")
+hda_df = gene_family_per_cluster(sam, hda_genes, cluster_col, "HDAC")
 if hda_df is not None:
     hda_df.to_csv(os.path.join(OUT_DIR, "link2_hda_per_cluster.csv"), index=False)
 print()
@@ -396,14 +395,14 @@ others = summary_df[summary_df["cluster"] != "Leaf primordium1"]
 print(f"  LP1 (n={lp1['n_cells']} cells):")
 print(f"    JAG1:     {lp1['jag1_pct']:.1f}%")
 print(f"    TPR:      {lp1['tpr_mean_pct']:.1f}%")
-print(f"    HDA:      {lp1['hda_mean_pct']:.1f}%")
+print(f"    HDAC:     {lp1['hda_mean_pct']:.1f}%   (machinery)")
 print(f"    KRP:      {lp1['krp_mean_pct']:.1f}%")
 print(f"    Cyclins:  {lp1['cyclin_target_mean_pct']:.2f}%")
 print(f"    CDK:      {lp1['cdk_mean_pct']:.2f}%")
 
 print(f"\n  Other clusters (mean +/- SD, n={len(others)}):")
 for col, label in [("jag1_pct", "JAG1"), ("tpr_mean_pct", "TPR"),
-                    ("hda_mean_pct", "HDA"), ("krp_mean_pct", "KRP"),
+                    ("hda_mean_pct", "HDAC"), ("krp_mean_pct", "KRP"),
                     ("cyclin_target_mean_pct", "Cyclins"), ("cdk_mean_pct", "CDK")]:
     m, s = others[col].mean(), others[col].std()
     ratio = lp1[col] / m if m > 0 else float('inf')
@@ -412,7 +411,7 @@ for col, label in [("jag1_pct", "JAG1"), ("tpr_mean_pct", "TPR"),
 # LP1 rank per component
 print("\n  LP1 rank among 16 clusters:")
 for col, label in [("jag1_pct", "JAG1"), ("tpr_mean_pct", "TPR"),
-                    ("hda_mean_pct", "HDA"), ("krp_mean_pct", "KRP"),
+                    ("hda_mean_pct", "HDAC"), ("krp_mean_pct", "KRP"),
                     ("cyclin_target_mean_pct", "Cyclins"), ("cdk_mean_pct", "CDK")]:
     rank = int((summary_df[col].rank(ascending=False))[summary_df["cluster"] == "Leaf primordium1"].values[0])
     print(f"    {label:10s}: #{rank}/16")
@@ -420,7 +419,7 @@ for col, label in [("jag1_pct", "JAG1"), ("tpr_mean_pct", "TPR"),
 # Spearman across 16 clusters
 print("\n  Spearman (JAG1 vs each family across 16 clusters):")
 jag1_vals = summary_df["jag1_pct"].values
-for col, label in [("tpr_mean_pct", "TPR"), ("hda_mean_pct", "HDA"),
+for col, label in [("tpr_mean_pct", "TPR"), ("hda_mean_pct", "HDAC"),
                     ("krp_mean_pct", "KRP"), ("cyclin_target_mean_pct", "Cyclins"),
                     ("cdk_mean_pct", "CDK")]:
     rho, pval = spearmanr(jag1_vals, summary_df[col].values)
