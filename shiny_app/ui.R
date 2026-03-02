@@ -76,28 +76,56 @@ ui <- page_navbar(
     wgcna_ui("wgcna")
   ),
 
-  # Tab 8: GO Enrichment
+  # Tab 8: Cell Cycle
+  nav_panel(
+    title = "Cell Cycle",
+    icon = icon("sync"),
+    cell_cycle_ui("cell_cycle")
+  ),
+
+  # Tab 9: Hormones
+  nav_panel(
+    title = "Hormones",
+    icon = icon("seedling"),
+    hormone_ui("hormone")
+  ),
+
+  # Tab 10: GO Enrichment
   nav_panel(
     title = "GO Enrichment",
     icon = icon("sitemap"),
     go_ui("go")
   ),
 
-  # Tab 9: Temporal
+  # Tab 11: Temporal
   nav_panel(
     title = "Temporal",
     icon = icon("clock"),
     temporal_ui("temporal")
   ),
 
-  # Tab 10: Download
+  # Tab 12: 79 Validated
+  nav_panel(
+    title = "79 Validated",
+    icon = icon("check-double"),
+    validated_ui("validated")
+  ),
+
+  # Tab 13: Single-Cell
+  nav_panel(
+    title = "Single-Cell",
+    icon = icon("braille"),
+    single_cell_ui("single_cell")
+  ),
+
+  # Tab 14: Download
   nav_panel(
     title = "Download",
     icon = icon("download"),
     download_ui("download")
   ),
 
-  # Tab 11: Methods
+  # Tab 15: Methods
   nav_panel(
     title = "Methods",
     icon = icon("book"),

@@ -6,7 +6,7 @@ library(readr)
 library(tidyr)
 
 # Paths — Phase3
-base_path <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/Desktop/Soybean-RNASEQ/Phase3-Refined-Analysis"
+base_path <- "C:/Users/bgtamang/OneDrive - University of Illinois - Urbana/USDA-UIUC WORKS/Bishal/Projects/Data Collections/MANUSCRIPTS/5. Soybean RNASeq leaf timeseries/Soybean-RNASEQ/Phase3-Refined-Analysis"
 tables_path <- file.path(base_path, "03_results/tables")
 data_path <- file.path(base_path, "01_data")
 output_path <- file.path(base_path, "GmJAG1_Dashboard/data")
@@ -401,6 +401,168 @@ if (exists("expr_matrix")) {
       paste(round(var_explained, 1), "%", collapse = ", "), "\n")
 } else {
   cat("   WARNING: Expression matrix not available for PCA\n")
+}
+
+# -----------------------------------------------------------------------------
+# 12. Cell Cycle Data (Figure 4 panels)
+# -----------------------------------------------------------------------------
+cat("\n12. Processing cell cycle data...\n")
+
+fig4_path <- file.path(base_path, "Manuscript/Figure/Figure4")
+
+# TPR + HDAC machinery (Fig 4B)
+machinery_file <- file.path(fig4_path, "Fig4B/Fig4B_Machinery_summary.csv")
+machinery_stats_file <- file.path(fig4_path, "Fig4B/Fig4B_Machinery_stats.csv")
+if (file.exists(machinery_file) && file.exists(machinery_stats_file)) {
+  machinery_summary <- read_csv(machinery_file, show_col_types = FALSE)
+  machinery_stats   <- read_csv(machinery_stats_file, show_col_types = FALSE)
+  saveRDS(list(genes = machinery_summary, stats = machinery_stats),
+          file.path(output_path, "cell_cycle_machinery.rds"), compress = "xz")
+  cat("   TPR/HDAC machinery:", nrow(machinery_summary), "genes\n")
+} else {
+  cat("   WARNING: Fig4B machinery files not found\n")
+}
+
+# KRP TP1 comparison (Fig 4C)
+krp_file <- file.path(fig4_path, "Fig4C/Fig4C_KRP_TP1_summary.csv")
+if (file.exists(krp_file)) {
+  krp_summary <- read_csv(krp_file, show_col_types = FALSE)
+  saveRDS(krp_summary, file.path(output_path, "cell_cycle_krp.rds"), compress = "xz")
+  cat("   KRP genes:", nrow(krp_summary), "\n")
+} else {
+  cat("   WARNING: KRP file not found\n")
+}
+
+# JAG1-target cyclins (Fig 4D)
+cyclin_file <- file.path(fig4_path, "Fig4D/Fig4D_Cyclin_summary.csv")
+if (file.exists(cyclin_file)) {
+  cyclin_targets <- read_csv(cyclin_file, show_col_types = FALSE)
+  saveRDS(cyclin_targets, file.path(output_path, "cell_cycle_cyclin_targets.rds"), compress = "xz")
+  cat("   JAG1-target cyclins:", nrow(cyclin_targets), "\n")
+} else {
+  cat("   WARNING: Cyclin summary file not found\n")
+}
+
+# CDK TP1 summary (Fig 4G)
+cdk_file <- file.path(fig4_path, "Fig4G/Fig4G_CDK_TP1_summary.csv")
+if (file.exists(cdk_file)) {
+  cdk_summary <- read_csv(cdk_file, show_col_types = FALSE)
+  saveRDS(cdk_summary, file.path(output_path, "cell_cycle_cdk.rds"), compress = "xz")
+  cat("   Core CDKs:", nrow(cdk_summary), "\n")
+} else {
+  cat("   WARNING: CDK summary file not found\n")
+}
+
+# Comprehensive lists (for browsable tables)
+cyclin_full_file <- file.path(tables_path, "Cyclin_analysis/Cyclin_comprehensive_list.csv")
+if (file.exists(cyclin_full_file)) {
+  cyclin_full <- read_csv(cyclin_full_file, show_col_types = FALSE)
+  saveRDS(cyclin_full, file.path(output_path, "cyclin_comprehensive.rds"), compress = "xz")
+  cat("   Full cyclin list:", nrow(cyclin_full), "\n")
+}
+
+cdk_full_file <- file.path(tables_path, "CDK_analysis/CDK_comprehensive_list.csv")
+if (file.exists(cdk_full_file)) {
+  cdk_full <- read_csv(cdk_full_file, show_col_types = FALSE)
+  saveRDS(cdk_full, file.path(output_path, "cdk_comprehensive.rds"), compress = "xz")
+  cat("   Full CDK list:", nrow(cdk_full), "\n")
+}
+
+# -----------------------------------------------------------------------------
+# 13. Hormone Pathway Data (Figure 4E)
+# -----------------------------------------------------------------------------
+cat("\n13. Processing hormone pathway data...\n")
+
+hormone_enrich_file <- file.path(fig4_path, "Fig4E/Fig4E_Hormone_enrichment.csv")
+if (file.exists(hormone_enrich_file)) {
+  hormone_enrichment <- read_csv(hormone_enrich_file, show_col_types = FALSE)
+  saveRDS(hormone_enrichment, file.path(output_path, "hormone_enrichment.rds"), compress = "xz")
+  cat("   Hormone enrichment:", nrow(hormone_enrichment), "pathways\n")
+} else {
+  cat("   WARNING: Hormone enrichment file not found\n")
+}
+
+hormone_genes_file <- file.path(fig4_path, "Fig4E/Fig4E_Hormone_genes_JAG1.csv")
+if (file.exists(hormone_genes_file)) {
+  hormone_genes <- read_csv(hormone_genes_file, show_col_types = FALSE)
+  saveRDS(hormone_genes, file.path(output_path, "hormone_genes_jag1.rds"), compress = "xz")
+  cat("   Hormone JAG1 target genes:", nrow(hormone_genes), "\n")
+} else {
+  cat("   WARNING: Hormone genes file not found\n")
+}
+
+# -----------------------------------------------------------------------------
+# 14. Validated Genes / Multi-Evidence Integration (Figure 6E)
+# -----------------------------------------------------------------------------
+cat("\n14. Processing validated genes (79 high-confidence targets)...\n")
+
+fig6_path <- file.path(base_path, "Manuscript/Figure/Figure6")
+
+validated_file <- file.path(fig6_path, "Fig6E_Validated_Genes_Full.csv")
+if (file.exists(validated_file)) {
+  validated_genes <- read_csv(validated_file, show_col_types = FALSE)
+  saveRDS(validated_genes, file.path(output_path, "validated_genes.rds"), compress = "xz")
+  cat("   Validated genes:", nrow(validated_genes), "with", ncol(validated_genes), "columns\n")
+} else {
+  cat("   WARNING: Validated genes file not found\n")
+}
+
+evidence_file <- file.path(fig6_path, "Fig6E_Evidence_Summary.csv")
+if (file.exists(evidence_file)) {
+  evidence_summary <- read_csv(evidence_file, show_col_types = FALSE)
+  saveRDS(evidence_summary, file.path(output_path, "evidence_summary.rds"), compress = "xz")
+  cat("   Evidence metrics:", nrow(evidence_summary), "\n")
+} else {
+  cat("   WARNING: Evidence summary file not found\n")
+}
+
+# -----------------------------------------------------------------------------
+# 15. Single-Cell Integration Data (snRNA-seq from Fan et al. 2025)
+# -----------------------------------------------------------------------------
+cat("\n15. Processing single-cell integration data...\n")
+
+sc_hyp_path <- file.path(base_path, "single_cell_integration/results/hypothesis_driven")
+sc_dd_path  <- file.path(base_path, "single_cell_integration/results/data_driven")
+
+# Cluster summary (all components)
+sc_summary_file <- file.path(sc_hyp_path, "summary_all_components_by_cluster.csv")
+if (file.exists(sc_summary_file)) {
+  sc_summary <- read_csv(sc_summary_file, show_col_types = FALSE)
+  saveRDS(sc_summary, file.path(output_path, "sc_cluster_summary.rds"), compress = "xz")
+  cat("   Cluster summary:", nrow(sc_summary), "clusters\n")
+} else {
+  cat("   WARNING: SC cluster summary not found\n")
+}
+
+# JAG1/JAG2 per cluster
+sc_jag_file <- file.path(sc_hyp_path, "link1_jag_per_cluster.csv")
+if (file.exists(sc_jag_file)) {
+  sc_jag <- read_csv(sc_jag_file, show_col_types = FALSE)
+  saveRDS(sc_jag, file.path(output_path, "sc_jag_per_cluster.rds"), compress = "xz")
+  cat("   JAG per cluster:", nrow(sc_jag), "rows\n")
+} else {
+  cat("   WARNING: SC JAG file not found\n")
+}
+
+# Target co-localization by tier
+sc_coloc_file <- file.path(base_path,
+  "Manuscript/Figure/Supplementary/FigS6_Single-cell/S33_SC_Target_Coloc.csv")
+if (file.exists(sc_coloc_file)) {
+  sc_coloc <- read_csv(sc_coloc_file, show_col_types = FALSE)
+  saveRDS(sc_coloc, file.path(output_path, "sc_target_coloc.rds"), compress = "xz")
+  cat("   Target co-localization:", nrow(sc_coloc), "rows\n")
+} else {
+  cat("   WARNING: SC co-localization file not found\n")
+}
+
+# Target detection by cluster
+sc_target_file <- file.path(sc_dd_path, "target_score_by_cluster.csv")
+if (file.exists(sc_target_file)) {
+  sc_target_score <- read_csv(sc_target_file, show_col_types = FALSE)
+  saveRDS(sc_target_score, file.path(output_path, "sc_target_score.rds"), compress = "xz")
+  cat("   Target scores:", nrow(sc_target_score), "clusters\n")
+} else {
+  cat("   WARNING: SC target score file not found\n")
 }
 
 # -----------------------------------------------------------------------------

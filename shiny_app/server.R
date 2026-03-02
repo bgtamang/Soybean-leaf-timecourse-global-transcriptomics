@@ -12,9 +12,13 @@ server <- function(input, output, session) {
   de_server("de", selected_gene)
   jag1_server("jag1", selected_gene)
   wgcna_server("wgcna")
+  cell_cycle_server("cell_cycle")
+  hormone_server("hormone")
   go_server("go")
   phenotype_server("phenotype", selected_gene)
   temporal_server("temporal", selected_gene)
+  validated_server("validated", selected_gene)
+  single_cell_server("single_cell")
   download_server("download")
   methods_server("methods")
 

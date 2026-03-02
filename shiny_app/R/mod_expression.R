@@ -61,7 +61,7 @@ expression_ui <- function(id) {
                         "Custom (enter below)" = "custom",
                         "Housekeeping - Top 20 (most stable)" = "hk_top20",
                         "Housekeeping - Top 50" = "hk_top50",
-                        "Housekeeping - All (452 genes)" = "hk_all",
+                        "Housekeeping - All" = "hk_all",
                         "JAG1 Targets - Gold" = "jag1_gold",
                         "JAG1 Targets - Silver" = "jag1_silver",
                         "JAG1 Targets - Bronze" = "jag1_bronze",
@@ -213,7 +213,7 @@ expression_server <- function(id, selected_gene) {
         labs(
           title = paste("Expression Profile:", gene_id),
           subtitle = if (!is.na(result$Best_hit_arabi_name)) result$Best_hit_arabi_name else NULL,
-          y = "Expression (TPM)",
+          y = "Expression (log2-CPM)",
           x = NULL,
           color = gsub("_", " ", input$color_by),
           fill = gsub("_", " ", input$color_by)
@@ -242,10 +242,10 @@ expression_server <- function(id, selected_gene) {
 
       expr_df <- data.frame(
         Sample = colnames(expr),
-        TPM = round(as.numeric(expr[gene_id, ]), 2)
+        log2CPM = round(as.numeric(expr[gene_id, ]), 2)
       ) %>%
         left_join(experimental_design, by = "Sample") %>%
-        select(Sample, Line, Leaf_type, Timepoint, TPM)
+        select(Sample, Line, Leaf_type, Timepoint, log2CPM)
 
       datatable(expr_df, options = list(pageLength = 15), rownames = FALSE)
     })

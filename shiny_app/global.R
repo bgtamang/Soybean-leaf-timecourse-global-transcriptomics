@@ -77,6 +77,28 @@ temporal_classification <- safe_load("temporal_classification.rds")
 binding_integration <- safe_load("binding_integration.rds")
 gene_list <- safe_load("gene_list.rds")
 
+# Cell cycle data (Figure 4)
+cell_cycle_machinery      <- safe_load("cell_cycle_machinery.rds")
+cell_cycle_krp            <- safe_load("cell_cycle_krp.rds")
+cell_cycle_cyclin_targets <- safe_load("cell_cycle_cyclin_targets.rds")
+cell_cycle_cdk            <- safe_load("cell_cycle_cdk.rds")
+cyclin_comprehensive      <- safe_load("cyclin_comprehensive.rds")
+cdk_comprehensive         <- safe_load("cdk_comprehensive.rds")
+
+# Hormone pathway data (Figure 4E)
+hormone_enrichment  <- safe_load("hormone_enrichment.rds")
+hormone_genes_jag1  <- safe_load("hormone_genes_jag1.rds")
+
+# Validated genes - 79 high-confidence targets (Figure 6E)
+validated_genes  <- safe_load("validated_genes.rds")
+evidence_summary <- safe_load("evidence_summary.rds")
+
+# Single-cell integration data (Fan et al. 2025 snRNA-seq)
+sc_cluster_summary <- safe_load("sc_cluster_summary.rds")
+sc_jag_per_cluster <- safe_load("sc_jag_per_cluster.rds")
+sc_target_coloc    <- safe_load("sc_target_coloc.rds")
+sc_target_score    <- safe_load("sc_target_score.rds")
+
 # Housekeeping genes (Machado et al. 2020)
 housekeeping_genes <- tryCatch({
   # Try multiple possible paths

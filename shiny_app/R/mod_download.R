@@ -86,12 +86,18 @@ download_ui <- function(id) {
             tags$blockquote(class = "blockquote",
               p(class = "mb-0",
                 "Tamang, B. et al. (2026). Transcriptome-wide identification of GmJAG1 ",
-                "target genes in soybean leaf development. [Journal TBD]"
+                "target genes in soybean leaf development."
               )
             ),
             hr(),
             p(class = "small text-muted",
-              "Raw sequencing data available at NCBI GEO: GSExxxxxx")
+              "Raw sequencing data: ",
+              tags$a(href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE317596",
+                     "NCBI GEO GSE317596", target = "_blank")),
+            p(class = "small text-muted",
+              "Analysis code: ",
+              tags$a(href = "https://github.com/bgtamang/Soybean-leaf-timecourse-global-transcriptomics",
+                     "GitHub", target = "_blank"))
           )
         )
       )

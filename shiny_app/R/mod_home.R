@@ -139,9 +139,14 @@ home_ui <- function(id) {
             p("If you use data from this dashboard, please cite:"),
             p(class = "fst-italic",
               "Tamang, B. et al. (2026). Transcriptome-wide identification of GmJAG1 ",
-              "target genes in soybean leaf development. [Journal TBD]"),
+              "target genes in soybean leaf development."),
             p(class = "text-muted small",
-              "Data deposited in NCBI GEO: GSExxxxxx")
+              "Data deposited in NCBI GEO: ",
+              tags$a(href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE317596",
+                     "GSE317596", target = "_blank"),
+              " | Code: ",
+              tags$a(href = "https://github.com/bgtamang/Soybean-leaf-timecourse-global-transcriptomics",
+                     "GitHub", target = "_blank"))
           )
         )
       )

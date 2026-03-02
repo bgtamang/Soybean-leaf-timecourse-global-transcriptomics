@@ -99,6 +99,9 @@ phenotype_server <- function(id, selected_gene) {
 
       pheno <- phenotype_traits
 
+      broad <- pheno[pheno$Leaf_Type == "Broad", ]
+      narrow <- pheno[pheno$Leaf_Type == "Narrow", ]
+
       tagList(
         h5("Leaf L/W Ratio"),
         tags$table(class = "table table-sm",
@@ -109,13 +112,13 @@ phenotype_server <- function(id, selected_gene) {
           ),
           tags$tr(
             tags$td("Broad"),
-            tags$td("1.26"),
-            tags$td("1.24")
+            tags$td(round(broad$V1_Ratio, 2)),
+            tags$td(round(broad$V2_Ratio, 2))
           ),
           tags$tr(
             tags$td("Narrow"),
-            tags$td("1.77"),
-            tags$td("2.53")
+            tags$td(round(narrow$V1_Ratio, 2)),
+            tags$td(round(narrow$V2_Ratio, 2))
           )
         ),
         hr(),
@@ -125,10 +128,15 @@ phenotype_server <- function(id, selected_gene) {
 
     # L/W ratio plot (publication quality)
     output$lw_plot <- renderPlotly({
+      pheno <- phenotype_traits
+      broad <- pheno[pheno$Leaf_Type == "Broad", ]
+      narrow <- pheno[pheno$Leaf_Type == "Narrow", ]
+
       lw_data <- data.frame(
         Leaf_Type = factor(rep(c("Broad", "Narrow"), each = 2), levels = c("Broad", "Narrow")),
         Stage = factor(rep(c("V1", "V2"), 2), levels = c("V1", "V2")),
-        LW_Ratio = c(1.26, 1.24, 1.77, 2.53)
+        LW_Ratio = round(c(broad$V1_Ratio, broad$V2_Ratio,
+                           narrow$V1_Ratio, narrow$V2_Ratio), 2)
       )
 
       p <- ggplot(lw_data, aes(x = Stage, y = LW_Ratio, fill = Leaf_Type, group = Leaf_Type)) +
