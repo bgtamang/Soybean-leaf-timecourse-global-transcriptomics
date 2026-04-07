@@ -66,7 +66,7 @@ expression_ui <- function(id) {
                         "JAG1 Targets - Silver" = "jag1_silver",
                         "JAG1 Targets - Bronze" = "jag1_bronze",
                         "Temporal - Persistent" = "temp_persistent",
-                        "Temporal - TP0-Specific" = "temp_tp0",
+                        "Temporal - TP1-Specific" = "temp_tp1",
                         "Temporal - Late Onset" = "temp_late"
                       ),
                       selected = "custom"
@@ -286,7 +286,7 @@ expression_server <- function(id, selected_gene) {
         },
         "temp_tp0" = {
           if (!is.null(jag1_targets) && "Pattern" %in% names(jag1_targets)) {
-            head(jag1_targets$GeneID[jag1_targets$Pattern == "TP0_Specific"], max_genes)
+            head(jag1_targets$GeneID[jag1_targets$Pattern == "TP1_Specific"], max_genes)
           } else character(0)
         },
         "temp_late" = {
@@ -357,7 +357,7 @@ expression_server <- function(id, selected_gene) {
           "jag1_silver" = paste("JAG1 Silver Tier Targets (n =", length(valid_genes), ")"),
           "jag1_bronze" = paste("JAG1 Bronze Tier Targets (n =", length(valid_genes), ")"),
           "temp_persistent" = paste("Persistent Pattern Genes (n =", length(valid_genes), ")"),
-          "temp_tp0" = paste("TP0-Specific Pattern Genes (n =", length(valid_genes), ")"),
+          "temp_tp1" = paste("TP1-Specific Pattern Genes (n =", length(valid_genes), ")"),
           "temp_late" = paste("Late Onset Pattern Genes (n =", length(valid_genes), ")"),
           "Multi-Gene Expression Heatmap"
         )

@@ -103,7 +103,7 @@ cell_cycle_server <- function(id) {
           p(tags$b("KRP Inhibitors")),
           p("9 KRP (Kip-Related Protein) CDK inhibitors. ",
             "None are JAG1 targets — unlike Arabidopsis."),
-          p(class = "small text-muted", "5 of 9 show higher expression in narrow-leaf at TP0")
+          p(class = "small text-muted", "5 of 9 show higher expression in narrow-leaf at TP1")
         ),
         "cyclin" = tagList(
           p(tags$b("JAG1-Target Cyclins")),
@@ -114,7 +114,7 @@ cell_cycle_server <- function(id) {
         ),
         "cdk" = tagList(
           p(tags$b("CDK Kinases")),
-          p("9 core CDKs (CDKA + CDKB) shown at TP0. ",
+          p("9 core CDKs (CDKA + CDKB) shown at TP1. ",
             "None are JAG1 targets — constitutive cell cycle machinery."),
           p(class = "small text-muted",
             "46 total CDKs in soybean; 0 are JAG1 targets or DE")
@@ -153,7 +153,7 @@ cell_cycle_server <- function(id) {
         theme_publication(base_size = 12) +
         theme(panel.grid.major.y = element_blank()) +
         labs(x = NULL, y = "Mean Expression (log2-CPM)",
-             title = "TPR/HDAC Co-repressor Complex Expression at TP0")
+             title = "TPR/HDAC Co-repressor Complex Expression at TP1")
 
       ggplotly(p, tooltip = "text") %>%
         layout(legend = list(orientation = "v", x = 1.02, y = 0.5))
@@ -181,7 +181,7 @@ cell_cycle_server <- function(id) {
         theme(axis.text.x = element_text(angle = 45, hjust = 1),
               panel.grid.major.x = element_blank()) +
         labs(x = NULL, y = "Expression (log2-CPM)",
-             title = "KRP Expression at TP0: Broad vs Narrow")
+             title = "KRP Expression at TP1: Broad vs Narrow")
 
       ggplotly(p, tooltip = "text") %>%
         layout(legend = list(orientation = "v", x = 1.02, y = 0.5))
@@ -215,7 +215,7 @@ cell_cycle_server <- function(id) {
         theme_publication(base_size = 12) +
         theme(panel.grid.major.y = element_blank()) +
         labs(x = NULL, y = "log2 Fold Change (Narrow vs Broad)",
-             title = "JAG1-Target Cyclins at TP0")
+             title = "JAG1-Target Cyclins at TP1")
 
       ggplotly(p, tooltip = "text")
     }
@@ -246,7 +246,7 @@ cell_cycle_server <- function(id) {
         theme(axis.text.x = element_text(angle = 45, hjust = 1),
               panel.grid.major.x = element_blank()) +
         labs(x = NULL, y = "Expression (log2-CPM)",
-             title = "Core CDK Expression at TP0: Broad vs Narrow")
+             title = "Core CDK Expression at TP1: Broad vs Narrow")
 
       ggplotly(p, tooltip = "text") %>%
         layout(legend = list(orientation = "v", x = 1.02, y = 0.5))

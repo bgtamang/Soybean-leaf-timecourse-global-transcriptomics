@@ -19,8 +19,8 @@ samples_ui <- function(id) {
             ),
             hr(),
             checkboxGroupInput(ns("timepoints"), "Timepoints:",
-              choices = c("TP0", "TP1", "TP2", "TP3", "TP4"),
-              selected = c("TP0", "TP1", "TP2", "TP3", "TP4")
+              choices = c("TP1", "TP2", "TP3", "TP4", "TP5"),
+              selected = c("TP1", "TP2", "TP3", "TP4", "TP5")
             ),
             hr(),
             checkboxGroupInput(ns("leaf_types"), "Leaf Types:",

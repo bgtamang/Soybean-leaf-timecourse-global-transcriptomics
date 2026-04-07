@@ -22,7 +22,7 @@ methods_ui <- function(id) {
             h5("Experimental Design"),
             tags$ul(
               tags$li(tags$b("Genotypes:"), " 4 (2 broad-leaf, 2 narrow-leaf)"),
-              tags$li(tags$b("Timepoints:"), " 5 (TP0-TP4, meristem through leaf expansion)"),
+              tags$li(tags$b("Timepoints:"), " 5 (TP1-TP5, shoot apex through leaf expansion)"),
               tags$li(tags$b("Replicates:"), " 3 biological replicates per condition"),
               tags$li(tags$b("Total Samples:"), " 60"),
               tags$li(tags$b("Sequencing:"), " Illumina NovaSeq 6000, 100bp single-end")
@@ -44,7 +44,7 @@ methods_ui <- function(id) {
               "framework. Genes with FDR < 0.05 and |log2FC| > 1 were considered differentially expressed."),
             h5("4. JAG1 Target Identification"),
             p("JAG1 targets were identified through a tiered approach based on consistency ",
-              "across pairwise genotype comparisons at TP0:"),
+              "across pairwise genotype comparisons at TP1:"),
             tags$ul(
               tags$li(tags$b("Gold:"), " DE in all 4 pairwise comparisons (76 genes)"),
               tags$li(tags$b("Silver:"), " DE in 3 of 4 comparisons (69 genes)"),
@@ -63,7 +63,7 @@ methods_ui <- function(id) {
             p("Cell cycle gene families were curated with Pfam domain validation: ",
               "101 cyclins (PF00134/PF02984), 46 CDKs (PF00069/PF07714), 9 KRP inhibitors, ",
               "12 TPR co-repressor complex genes, and 15 HDAC complex genes (Yang et al. 2018). ",
-              "Expression patterns were analyzed at TP0 (meristem stage) to characterize ",
+              "Expression patterns were analyzed at TP1 (shoot apex) to characterize ",
               "JAG1-mediated cell proliferation control."),
             h5("8. Hormone Pathway Analysis"),
             p("Hormone-related genes (459 total) were mapped to 8 sub-pathways using KEGG ",

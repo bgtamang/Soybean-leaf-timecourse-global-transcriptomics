@@ -22,7 +22,7 @@ jag1_ui <- function(id) {
             ),
             hr(),
             selectInput(ns("pattern"), "Expression Pattern:",
-              choices = c("All", "Persistent", "TP0_Specific", "Late_Onset", "Variable"),
+              choices = c("All", "Persistent", "TP1_Specific", "Late_Onset", "Variable"),
               selected = "All"
             ),
             hr(),
@@ -231,7 +231,7 @@ jag1_server <- function(id, selected_gene) {
       }
 
       # Get FC columns for timepoints
-      fc_cols <- c("FC_TP0", "FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4")
+      fc_cols <- c("FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4", "FC_TP5")
       fc_cols <- fc_cols[fc_cols %in% names(targets)]
 
       if (length(fc_cols) == 0) {
@@ -304,9 +304,9 @@ jag1_server <- function(id, selected_gene) {
               tags$dd(target$Pattern),
               tags$dt("JAG1 Correlated"),
               tags$dd(ifelse(target$Correlated_with_JAG1, "Yes", "No")),
-              if (!is.na(target$JAG1_Correlation_TP0)) tagList(
-                tags$dt("JAG1 Correlation (TP0)"),
-                tags$dd(round(target$JAG1_Correlation_TP0, 3))
+              if (!is.na(target$JAG1_Correlation_TP1)) tagList(
+                tags$dt("JAG1 Correlation (TP1)"),
+                tags$dd(round(target$JAG1_Correlation_TP1, 3))
               )
             )
           )

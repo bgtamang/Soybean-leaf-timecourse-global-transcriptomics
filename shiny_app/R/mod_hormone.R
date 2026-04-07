@@ -157,8 +157,8 @@ hormone_server <- function(id) {
       if (is.null(data)) return(NULL)
 
       display_cols <- c("GeneID", "Confidence_Tier", "Matched_KO",
-                        "Mean_logFC_Pairwise", "NarrowvsBroad_TP0_logFC",
-                        "NarrowvsBroad_TP0_FDR", "Best_hit_arabi_defline",
+                        "Mean_logFC_Pairwise", "NarrowvsBroad_TP1_logFC",
+                        "NarrowvsBroad_TP1_FDR", "Best_hit_arabi_defline",
                         "KEGG_Arabi_defline")
       display_cols <- display_cols[display_cols %in% names(data)]
 

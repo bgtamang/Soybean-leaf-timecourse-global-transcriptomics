@@ -4,7 +4,7 @@ Analysis scripts for identifying and characterizing transcriptional targets of G
 
 ## Citation
 
-Tamang BG, Ainsworth EA. [Title TBD]. *Journal TBD*.
+Tamang BG, Kramer C, Ainsworth EA. Natural leaf shape variation reveals diverse transcriptional targets of GmJAG1 during soybean leaf development. *XX* (2026).
 
 ## Data Availability
 
@@ -21,9 +21,9 @@ Glycine max Williams 82 genome assembly Gmax_880_v6.0 and annotation Wm82.a6.v1 
 - **Huang et al. 2021** ChIP-seq supplementary Table S2: `1-s2.0-S0888754320320723-mmc2.xlsx` from [Huang et al. (2021) *Genomics* 113:1304-1316](https://doi.org/10.1016/j.ygeno.2020.12.033)
 - **Wang et al. 2024** DAP-seq supplementary data: `plants-3024718-supplementary.xlsx` from [Wang et al. (2024) *Plants* 13:1024](https://doi.org/10.3390/plants13071024)
 
-### Published snRNA-seq data (for 12_single_cell_integration)
+### Published snRNA-seq data (for 11_single_cell_integration)
 - **Fan et al. 2025** soybean shoot apex and leaf single-nucleus RNA-seq: Pre-processed h5ad files (`SAM.scRNA.h5ad`, `Leaf.scRNA.h5ad`) from [SoyOmics](https://ngdc.cncb.ac.cn/soyomics). Reference: [Fan et al. (2025) *Molecular Plant* 18:669-689](https://doi.org/10.1016/j.molp.2025.02.003)
-- **SoyBase pangene table**: `Glycine.pan5.MKRS.table_ref_lines.tsv.gz` from [SoyBase](https://www.soybase.org/) (downloaded automatically by 12a script)
+- **SoyBase pangene table**: `Glycine.pan5.MKRS.table_ref_lines.tsv.gz` from [SoyBase](https://www.soybase.org/) (downloaded automatically by 11a script)
 
 ## Setup
 
@@ -35,7 +35,7 @@ base_dir <- "/path/to/your/project"
 
 Shell scripts in `01_preprocessing/` contain SLURM directives for HPC execution. Update paths and SLURM parameters for your computing environment.
 
-Python scripts in `12_single_cell_integration/` define a `BASE_DIR` variable similarly. Update this and ensure the conda environment has the required packages (see below).
+Python scripts in `11_single_cell_integration/` define a `BASE_DIR` variable similarly. Update this and ensure the conda environment has the required packages (see below).
 
 Place downloaded data as follows:
 ```
@@ -52,9 +52,12 @@ Place downloaded data as follows:
 
 - **R** v4.5.2
 - **Salmon** v1.10.0 (read quantification)
-- **Python** 3.10 (single-cell integration, step 12 only)
+- **Python** 3.10 (single-cell integration step 11, phylogenetics step 12)
+- **MAFFT** v7.520 (multiple sequence alignment, step 12)
+- **trimAl** v1.4.1 (alignment trimming, step 12)
+- **IQ-TREE2** v2.2.2.6 (phylogenetic inference, step 12)
 
-### Python Packages (for 12_single_cell_integration)
+### Python Packages (for 11_single_cell_integration and 12_cyclin_phylogenetics)
 
 | Package | Purpose |
 |---------|---------|
@@ -72,8 +75,6 @@ Place downloaded data as follows:
 | tximport | 1.36.1 | Salmon output import |
 | sva (ComBat-seq) | 3.56.0 | Batch correction |
 | WGCNA | 1.73 | Co-expression network |
-| DRIMSeq | 1.36.0 | Differential transcript usage |
-| stageR | 1.30.1 | Stage-wise FDR control |
 | clusterProfiler | 4.16.0 | GO enrichment |
 | enrichplot | — | GO enrichment visualization |
 | AnnotationDbi | — | Annotation database interface |
@@ -92,6 +93,7 @@ Place downloaded data as follows:
 | scales | — | Axis scaling |
 | RColorBrewer | — | Color palettes |
 | jsonlite | — | JSON I/O |
+| ggtree | — | Phylogenetic tree visualization |
 
 ## Directory Structure
 
@@ -110,15 +112,16 @@ Scripts are organized in execution order:
                            JAG1 target module enrichment
 08_binding_integration/    ChIP-seq/DAP-seq peak extraction, promoter motif analysis,
                            binding evidence integration
-09_DTU_analysis/           Differential transcript usage (DRIMSeq/stageR)
-10_multi_evidence_integration/ Multi-layer evidence filtering, phenotype correlation,
+09_multi_evidence_integration/ Multi-layer evidence filtering, phenotype correlation,
                            cross-validation
-11_validated_genes_analysis/ Functional categorization, visualization, and heatmap
-                           of 79 high-confidence targets (Gold: 76, Silver: 69,
-                           Bronze: 1,422; total: 1,567 tiered targets)
-12_single_cell_integration/ Gene ID conversion (Wm82↔ZH13), hypothesis-driven
+10_validated_genes_analysis/ Functional categorization, visualization, and heatmap
+                           of 79 high-confidence targets (Tier 1: 76, Tier 2: 69,
+                           Tier 3: 1,422; total: 1,567 tiered targets)
+11_single_cell_integration/ Gene ID conversion (Wm82↔ZH13), hypothesis-driven
                            pathway validation and data-driven target mapping
                            using published snRNA-seq (Fan et al. 2025)
+12_cyclin_phylogenetics/   D-type cyclin sequence extraction, MAFFT alignment,
+                           IQ-TREE2 ML phylogeny, ggtree visualization
 shiny_app/                 Interactive Shiny dashboard for exploring results
 ```
 
@@ -129,11 +132,12 @@ Folders are numbered in the order they should be run. Within each folder, script
 1. **01_preprocessing** requires raw FASTQ files and Salmon installation
 2. **02-03** process and explore quantified data
 3. **04** produces DE results used by all downstream analyses
-4. **05-09** can be run independently after step 4
+4. **05-08** can be run independently after step 4
 5. **06f** (functional integration) optionally incorporates WGCNA results from step 7
-6. **10** integrates results from steps 4, 6f, 7, and 8
-7. **11** uses the 79 high-confidence targets from step 10
-8. **12** uses target gene lists from step 4 and high-confidence targets from step 10; requires Python 3.10+ with scanpy
+6. **09** integrates results from steps 4, 6f, 7, and 8
+7. **10** uses the 79 high-confidence targets from step 9
+8. **11** uses target gene lists from step 4 and high-confidence targets from step 9; requires Python 3.10+ with scanpy
+9. **12** requires MAFFT, trimAl, and IQ-TREE2; can be run independently after step 5
 
 ## Experimental Design
 
@@ -141,7 +145,11 @@ Four soybean genotypes (2 narrow-leaf with D9H mutation in GmJAG1, 2 broad-leaf 
 
 ## Interactive Dashboard
 
-The `shiny_app/` folder contains an interactive Shiny application for exploring the RNA-seq results, including gene expression profiles, differential expression, GO enrichment, WGCNA modules, and phenotype correlations. To run locally:
+The `shiny_app/` folder contains an interactive Shiny application for exploring the RNA-seq results, including gene expression profiles, differential expression, GO enrichment, WGCNA modules, cell cycle analysis, and phenotype correlations.
+
+**Live dashboard:** [https://bgtamang.shinyapps.io/GmJAG1-Dashboard/](https://bgtamang.shinyapps.io/GmJAG1-Dashboard/)
+
+To run locally:
 
 ```r
 shiny::runApp("shiny_app")

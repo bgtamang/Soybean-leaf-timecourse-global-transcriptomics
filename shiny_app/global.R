@@ -350,11 +350,11 @@ leaftype_colors <- c(
 
 # Timepoint colors (viridis gradient — matches publication Fig 2A)
 timepoint_colors <- c(
-  "TP0" = "#440154",  # Dark purple (meristem)
-  "TP1" = "#3B528B",  # Blue
-  "TP2" = "#21908C",  # Teal
-  "TP3" = "#5DC863",  # Green
-  "TP4" = "#FDE725"   # Yellow (mature)
+  "TP1" = "#440154",  # Dark purple (shoot apex)
+  "TP2" = "#3B528B",  # Blue
+  "TP3" = "#21908C",  # Teal
+  "TP4" = "#5DC863",  # Green
+  "TP5" = "#FDE725"   # Yellow (mature)
 )
 
 # Scientific color palettes

@@ -10,7 +10,7 @@ temporal_ui <- function(id) {
           card_header("Temporal Filters"),
           card_body(
             selectInput(ns("pattern_type"), "Expression Pattern:",
-              choices = c("All", "Persistent", "TP0_Specific", "Late_Onset", "Variable",
+              choices = c("All", "Persistent", "TP1_Specific", "Late_Onset", "Variable",
                           "Housekeeping (Machado et al.)" = "Housekeeping"),
               selected = "All"
             ),
@@ -211,9 +211,9 @@ temporal_server <- function(id, selected_gene) {
       }
 
       # Get FC columns for other patterns
-      fc_cols <- grep("^FC_TP[0-4]$", names(data), value = TRUE)
+      fc_cols <- grep("^FC_TP[1-5]$", names(data), value = TRUE)
       if (length(fc_cols) == 0) {
-        fc_cols <- c("FC_TP0", "FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4")
+        fc_cols <- c("FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4", "FC_TP5")
         fc_cols <- fc_cols[fc_cols %in% names(data)]
       }
 
@@ -291,7 +291,7 @@ temporal_server <- function(id, selected_gene) {
       gene_data <- gene_data[1, ]
 
       # Get FC values
-      fc_cols <- c("FC_TP0", "FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4")
+      fc_cols <- c("FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4", "FC_TP5")
       fc_cols <- fc_cols[fc_cols %in% names(gene_data)]
 
       if (length(fc_cols) == 0) {
@@ -333,7 +333,7 @@ temporal_server <- function(id, selected_gene) {
         display_cols <- c("GeneID", "Pattern", "Mean_Expression", "SD", "CV_percent")
       } else {
         display_cols <- c("GeneID", "Pattern", "Confidence_Tier",
-                          "FC_TP0", "FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4",
+                          "FC_TP1", "FC_TP2", "FC_TP3", "FC_TP4", "FC_TP5",
                           "Best_hit_arabi_name")
       }
       display_cols <- display_cols[display_cols %in% names(data)]

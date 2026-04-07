@@ -79,9 +79,9 @@ home_ui <- function(id) {
             ),
             h5("Timepoints"),
             tags$ul(
-              tags$li(tags$b("TP0:"), " Meristem/leaf primordia initiation"),
-              tags$li(tags$b("TP1-TP2:"), " Early leaf development"),
-              tags$li(tags$b("TP3-TP4:"), " Mid to late leaf expansion")
+              tags$li(tags$b("TP1:"), " Shoot apex/meristem"),
+              tags$li(tags$b("TP2-TP3:"), " Early leaf development"),
+              tags$li(tags$b("TP4-TP5:"), " Mid to late leaf expansion")
             ),
             h5("Replicates"),
             p("3 biological replicates per genotype-timepoint combination")
@@ -138,8 +138,8 @@ home_ui <- function(id) {
           card_body(
             p("If you use data from this dashboard, please cite:"),
             p(class = "fst-italic",
-              "Tamang, B. et al. (2026). Transcriptome-wide identification of GmJAG1 ",
-              "target genes in soybean leaf development."),
+              "Tamang, B.G., Kramer, C., and Ainsworth, E.A. (2026). Natural leaf shape variation reveals ",
+              "diverse transcriptional targets of GmJAG1 during soybean leaf development."),
             p(class = "text-muted small",
               "Data deposited in NCBI GEO: ",
               tags$a(href = "https://www.ncbi.nlm.nih.gov/geo/query/acc.cgi?acc=GSE317596",
