@@ -4,7 +4,7 @@ Analysis scripts for identifying and characterizing transcriptional targets of G
 
 ## Citation
 
-Tamang BG, Kramer C, Ainsworth EA. Natural leaf shape variation reveals diverse transcriptional targets of GmJAG1 during soybean leaf development. *XX* (2026).
+Tamang BG, Kramer C, Ainsworth EA. Natural leaf shape variation reveals diverse transcriptional targets of GmJAG1 during soybean leaf development. *The Plant Journal* 127, e71088 (2026). [https://doi.org/10.1111/tpj.71088](https://doi.org/10.1111/tpj.71088)
 
 ## Data Availability
 
