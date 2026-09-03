@@ -85,8 +85,11 @@ download_ui <- function(id) {
             p("If you use data from this dashboard in your research, please cite:"),
             tags$blockquote(class = "blockquote",
               p(class = "mb-0",
-                "Tamang, B. et al. (2026). Transcriptome-wide identification of GmJAG1 ",
-                "target genes in soybean leaf development."
+                "Tamang, B.G., Kramer, C., and Ainsworth, E.A. (2026). Natural leaf shape variation reveals ",
+                "diverse transcriptional targets of GmJAG1 during soybean leaf development. ",
+                tags$em("The Plant Journal"), " 127, e71088. ",
+                tags$a(href = "https://doi.org/10.1111/tpj.71088",
+                       "https://doi.org/10.1111/tpj.71088", target = "_blank")
               )
             ),
             hr(),
